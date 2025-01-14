@@ -16,9 +16,12 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.swervedrive.drivebase.AbsoluteDrive;
 import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
@@ -130,6 +133,7 @@ public class RobotContainer {
     // Configure the trigger bindings
     configureBindings();
 
+    
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
   }
 
@@ -147,7 +151,7 @@ public class RobotContainer {
    * Flight joysticks}.
    */
   private void configureBindings() {
-    
+    driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
   }
 
