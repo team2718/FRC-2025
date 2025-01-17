@@ -86,11 +86,11 @@ public class Robot extends TimedRobot
   @Override
   public void disabledPeriodic()
   {
-    // if (disabledTimer.hasElapsed(Constants.DrivebaseConstants.WHEEL_LOCK_TIME))
-    // {
-    //   m_robotContainer.setMotorBrake(false);
-    //   disabledTimer.stop();
-    // }
+    if (disabledTimer.hasElapsed(Constants.DrivebaseConstants.WHEEL_LOCK_TIME))
+    {
+      m_robotContainer.setMotorBrake(false);
+      disabledTimer.stop();
+    }
   }
 
   /**
@@ -147,7 +147,7 @@ public class Robot extends TimedRobot
   {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
-    m_robotContainer.setDriveMode();
+    // m_robotContainer.setDriveMode();
   }
 
   /**
