@@ -3,10 +3,10 @@
     "front": -12.11,
     "left": 12.11
   },
-  "absoluteEncoderOffset": 337.1,
+  "absoluteEncoderOffset": 42.7,
   "drive": {
     "type": "krakenx60foc",
-    "id": 7,
+    "id": 9,
     "canbus": null
   },
   "angle": {
