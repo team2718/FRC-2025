@@ -14,8 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class CoralIntakeSubsystem extends SubsystemBase{
 
-    private final SparkMax topIntakemotor;
-    private final SparkMax bottomIntakemotor;
+    private final SparkMax Intakemotor;
     private final SparkMax indexerMotor;
 
     private enum INTAKE_STATE {
@@ -25,35 +24,29 @@ public class CoralIntakeSubsystem extends SubsystemBase{
     private INTAKE_STATE intakeState = INTAKE_STATE.HOLD;
 
     public CoralIntakeSubsystem() {
-        topIntakemotor = new SparkMax(Constants.IntakeConstants.topIntakemotorID, SparkLowLevel.MotorType.kBrushless);
-        bottomIntakemotor = new SparkMax(Constants.IntakeConstants.bottomIntakemotorID, SparkLowLevel.MotorType.kBrushless);
+        Intakemotor = new SparkMax(Constants.IntakeConstants.IntakemotorID, SparkLowLevel.MotorType.kBrushless);
         indexerMotor = new SparkMax(Constants.IntakeConstants.indexerMotorID, SparkLowLevel.MotorType.kBrushless);
 
-        SparkMaxConfig topIntakeConfig = new SparkMaxConfig();
-        SparkMaxConfig bottomIntakeConfig = new SparkMaxConfig();
+        SparkMaxConfig IntakeConfig = new SparkMaxConfig();
         SparkMaxConfig indexerConfig = new SparkMaxConfig();
 
-        topIntakemotor.configure(topIntakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        bottomIntakemotor.configure(bottomIntakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        Intakemotor.configure(IntakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         indexerMotor.configure(indexerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
         // sets intake speed
     public void setSpeed(double power) {
-        topIntakemotor.set(power);
-        bottomIntakemotor.set(power);
+        Intakemotor.set(power);
     }
 
     // stops intake
     public void stopIntake() {
-        topIntakemotor.set(0);
-        bottomIntakemotor.set(0);
+        Intakemotor.set(0);
     }
 
     // for backwards intake
     public void setbackSpeed(double power) {
-        topIntakemotor.set(-power);
-        bottomIntakemotor.set(-power);
+        Intakemotor.set(-power);
     }
 
     // for backwards index
@@ -72,7 +65,7 @@ public class CoralIntakeSubsystem extends SubsystemBase{
     }
 
     public double getSpeed() {
-        return topIntakemotor.get();
+        return Intakemotor.get();
     }
 
     public Command runIntake(double Speed) {
@@ -99,27 +92,23 @@ public class CoralIntakeSubsystem extends SubsystemBase{
     }
 
     public void stopIntakePeriodic() {
-        if (hasCoral() && intakeState == INTAKE_STATE.INTAKE) {
+        if (robotHasCoral() && intakeState == INTAKE_STATE.INTAKE) {
             intakeState = INTAKE_STATE.HOLD;
-            topIntakemotor.set(0);
-            bottomIntakemotor.set(0);
+            Intakemotor.set(0);
             indexerMotor.set(0);
         }
 
         switch (intakeState) {
             case INTAKE:
-            topIntakemotor.set(0.7);
-            bottomIntakemotor.set(0.7);
+            Intakemotor.set(0.7);
                 indexerMotor.set(0.7);
                 break;
             case OUTTAKE:
-            topIntakemotor.set(-0.5);
-            bottomIntakemotor.set(-0.5);
+            Intakemotor.set(-0.5);
                 indexerMotor.set(-0.5);
                 break;
             default:
-                topIntakemotor.set(0);
-                bottomIntakemotor.set(0);
+                Intakemotor.set(0);
                 indexerMotor.set(0);
                 break;
         }
@@ -127,13 +116,13 @@ public class CoralIntakeSubsystem extends SubsystemBase{
 
     // sets intake in commmand
     public void setIntake(double speed) {
-        topIntakemotor.set(speed);
-        bottomIntakemotor.set(speed);
+        Intakemotor.set(speed);
         indexerMotor.set(speed);
     }
 
-    // testing if the robot has the coral (placeholder for now)
-    public boolean hasCoral() {
+    // testing if the robot has the coral, probably for LEDs (placeholder for now)
+    public boolean robotHasCoral() {
+        //last year: "return !IntakeLimitSwitch.get()""
         return true;
     }
 
