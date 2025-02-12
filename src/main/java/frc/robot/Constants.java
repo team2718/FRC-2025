@@ -44,4 +44,10 @@ public final class Constants {
     public static final double ROTATION_MULTIPLIER = 1.0;
     public static final double DEADBAND = 0.3;
   }
+
+  public static final class IntakeConstants
+  {
+    public static final int IntakemotorID = 4;
+    public static final int indexerMotorID = 2;
+  }
 }
