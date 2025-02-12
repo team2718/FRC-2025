@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.intake.CoralIntakeCommand;
+import frc.robot.subsystems.intake.CoralIntakeSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
 
@@ -27,6 +29,8 @@ import swervelib.SwerveInputStream;
  * trigger mappings) should be declared here.
  */
 public class RobotContainer {
+
+  private final CoralIntakeSubsystem m_intake = new CoralIntakeSubsystem();
 
   private final CommandXboxController driverXbox = new CommandXboxController(0);
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
@@ -60,6 +64,10 @@ public class RobotContainer {
   // Drive with right-stick angular velocity control
   Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
 
+
+  // Intake command
+  private final CoralIntakeCommand runIntake = new CoralIntakeCommand(m_intake, 0.7);
+
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
@@ -86,6 +94,9 @@ public class RobotContainer {
   private void configureBindings() {
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
+
+    // The intake runs when the b button is held down
+    driverXbox.b().onTrue(runIntake);
   }
 
   /**
