@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.revrobotics.spark.config.SparkBaseConfig;
+
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
@@ -43,5 +45,10 @@ public final class Constants {
     public static final double SPEED_MULTIPLIER = 0.6;
     public static final double ROTATION_MULTIPLIER = 1.0;
     public static final double DEADBAND = 0.3;
+  }
+
+  public static final class ElevatorConstants {
+    public static final int elevatormotor1ID = 10;
+    public static final int elevatormotor2ID = 11;
   }
 }
