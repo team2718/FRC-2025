@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.revrobotics.spark.config.SparkBaseConfig;
+
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
@@ -45,9 +47,21 @@ public final class Constants {
     public static final double DEADBAND = 0.3;
   }
 
-  public static final class IntakeConstants
-  {
-    public static final int IntakemotorID = 4;
-    public static final int indexerMotorID = 2;
+  public static final class IntakeConstants {
+    public static final int intakemotorID = 10;
+    public static final int intakeLimitSwitchChannel = 5;
+    public static final int indexermotorID = 15;
+  }
+
+  public static final class ArmConstants {
+    public static final int armMotorID = 13;
+  }
+  
+  public static final class EndEffectorConstants {
+    public static final int endeffectormotor1ID = 14;
+  }
+  public static final class ElevatorConstants {
+    public static final int elevatormotor1ID = 11;
+    public static final int elevatormotor2ID = 12;
   }
 }

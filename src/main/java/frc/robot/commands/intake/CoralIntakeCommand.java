@@ -25,6 +25,6 @@ public class CoralIntakeCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return intake.hasCoral(); // the command is finished when the intake has the note
+        return intake.robotHasCoral(); // the command is finished when the intake has the note
     }
 }

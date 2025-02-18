@@ -25,8 +25,8 @@ public class CoralIntakeSubsystem extends SubsystemBase{
     private INTAKE_STATE intakeState = INTAKE_STATE.HOLD;
 
     public CoralIntakeSubsystem() {
-        Intakemotor = new SparkMax(Constants.IntakeConstants.IntakemotorID, SparkLowLevel.MotorType.kBrushless);
-        indexerMotor = new SparkMax(Constants.IntakeConstants.indexerMotorID, SparkLowLevel.MotorType.kBrushless);
+        Intakemotor = new SparkMax(Constants.IntakeConstants.intakemotorID, SparkLowLevel.MotorType.kBrushless);
+        indexerMotor = new SparkMax(Constants.IntakeConstants.indexermotorID, SparkLowLevel.MotorType.kBrushless);
 
         SparkMaxConfig IntakeConfig = new SparkMaxConfig();
         SparkMaxConfig indexerConfig = new SparkMaxConfig();
