@@ -13,7 +13,17 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+//subsystems
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.elevator.ElevatorSubsystem;
+import frc.robot.subsystems.intake.IntakeSubsystem;
+import frc.robot.subsystems.arm.ArmSubsystem;
+import frc.robot.subsystems.endeffector.EndEffectorSubsystem;
+//commands
+import frc.robot.commands.elevator.*;
+import frc.robot.commands.intake.*;
+import frc.robot.commands.arm.*;
+import frc.robot.commands.endeffector.*;
 import java.io.File;
 
 import swervelib.SwerveInputStream;
@@ -31,6 +41,10 @@ public class RobotContainer {
   private final CommandXboxController driverXbox = new CommandXboxController(0);
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
       "swerve"));
+  private final ElevatorSubsystem elevator = new ElevatorSubsystem();
+  private final IntakeSubsystem intake = new IntakeSubsystem();
+  private final ArmSubsystem arm = new ArmSubsystem();
+  private final EndEffectorSubsystem endeffector = new EndEffectorSubsystem();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled
@@ -63,6 +77,15 @@ public class RobotContainer {
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
+
+  private final ElevatorCommand elevatorupCommand = new ElevatorCommand(elevator);
+  private final ElevatorCommand elevatordownCommand = new ElevatorCommand(elevator);
+
+  private final IntakeCommand runIntake = new IntakeCommand(intake, 0.8);
+
+  private final ArmCommand runArm = new ArmCommand(arm, 0.5);
+
+  private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.6);
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -86,7 +109,13 @@ public class RobotContainer {
   private void configureBindings() {
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
-  }
+    driverXbox.leftBumper().whileTrue(runIntake);
+    driverXbox.b().onTrue(runArm);
+    driverXbox.x().onTrue(runEffector);
+
+    
+    }
+  
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

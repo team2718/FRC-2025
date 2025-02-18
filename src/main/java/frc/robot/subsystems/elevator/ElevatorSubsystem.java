@@ -1,7 +1,6 @@
 
 package frc.robot.subsystems.elevator;
 
-import 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -42,6 +41,10 @@ public ElevatorSubsystem() {
 
     elevatormotor1.setControl(voltageControl.withOutput(0.0));
     elevatormotor2.setControl(voltageControl.withOutput(0.0));
+
+    talon_config.CurrentLimits.StatorCurrentLimit = 40;
+    talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
     
 }
 @Override
