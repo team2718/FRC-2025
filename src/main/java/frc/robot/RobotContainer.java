@@ -78,12 +78,13 @@ public class RobotContainer {
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
 
-  private final ElevatorCommand elevatorupCommand = new ElevatorCommand(elevator);
-  private final ElevatorCommand elevatordownCommand = new ElevatorCommand(elevator);
+  private final ElevatorCommand elevatorupCommand = new ElevatorCommand(elevator, 0.5);
+  private final ElevatorCommand elevatordownCommand = new ElevatorCommand(elevator, -0.5);
 
   private final IntakeCommand runIntake = new IntakeCommand(intake, 0.8);
 
-  private final ArmCommand runArm = new ArmCommand(arm, 0.5);
+  private final ArmCommand runArmRight = new ArmCommand(arm, 0.5);
+  private final ArmCommand runArmLeft = new ArmCommand(arm, -0.5);
 
   private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.6);
   /**
@@ -108,10 +109,13 @@ public class RobotContainer {
    */
   private void configureBindings() {
     drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
-    driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
+    // driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
     driverXbox.leftBumper().whileTrue(runIntake);
-    driverXbox.b().onTrue(runArm);
-    driverXbox.x().onTrue(runEffector);
+    driverXbox.b().whileTrue(runArmLeft);
+    driverXbox.a().whileTrue(runArmRight);
+    driverXbox.rightBumper().whileTrue(runEffector);
+    driverXbox.x().whileTrue(elevatordownCommand);
+    driverXbox.y().whileTrue(elevatorupCommand);
 
     
     }

@@ -11,17 +11,23 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.revrobotics.RelativeEncoder;
+import edu.wpi.first.units.VoltageUnit;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig;
-
+import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 
 // 2 motors, one is follower, PID, feedforward, hall effect sensor, use relative encoder on lead motor
 
@@ -32,6 +38,10 @@ public class ElevatorSubsystem extends SubsystemBase {
     final TalonFX elevatormotor2 = new TalonFX(Constants.ElevatorConstants.elevatormotor2ID);
     private TalonFXConfiguration talon_config = new TalonFXConfiguration();
     final VoltageOut voltageControl = new VoltageOut(0.0);
+    private final ProfiledPIDController elevatorVoltagePID;
+    private final ElevatorFeedforward elevatorFeedforward;
+    // private final RelativeEncoder elevatorRelativeEncoder;
+
 
 public ElevatorSubsystem() {
     talon_config.CurrentLimits.StatorCurrentLimit = 40;
@@ -45,11 +55,35 @@ public ElevatorSubsystem() {
     talon_config.CurrentLimits.StatorCurrentLimit = 40;
     talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
+    elevatorFeedforward = new ElevatorFeedforward(0, 0, 0);
+    elevatorVoltagePID = new ProfiledPIDController(0, 0, 0, 
+        new TrapezoidProfile.Constraints(0, 0), 0.02);
     
+   // elevatorRelativeEncoder = elevatormotor1.getEncoder();
+
 }
 @Override
     public void periodic() {
         
     }
+
+public void stopElevator() {
+    elevatormotor1.set(0);
+}
+
+public void elevatorGo(double speed) {
+    elevatormotor1.set(speed);
+}
+
+// public void updateElevatorLoop() {
+    // double voltage = elevatorVoltagePID.calculate(getElevatorAngle()) + elevatorFeedforward.calculate(elevatorVoltagePID.getSetpoint().position, elevatorVoltagePID.getSetpoint().velocity);
+    // voltage = Math.max(-7, Math.min(7, voltage));
+// 
+    // setVoltage(Volts.of(voltage));
+// }
+
+// public void getElevatorAngle() {
+    // return elevatorRelativeEncoder.get();
+// }
 
 }

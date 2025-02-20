@@ -4,10 +4,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public class EndEffectorCommand extends Command{
     private final EndEffectorSubsystem endeffector;
-
-public EndEffectorCommand(EndEffectorSubsystem endeffector, double speed) {
-    this.endeffector = endeffector;
+    private double speed;
+    
+    public EndEffectorCommand(EndEffectorSubsystem endeffector, double speed) {
+        this.endeffector = endeffector;
+        this.speed = speed;
     addRequirements(endeffector);
+   
 }
 
 @Override
@@ -17,7 +20,7 @@ public void initialize() {
 
 @Override 
 public void execute() {
-    endeffector.setEndEffector(0.8);
+    endeffector.setEndEffector(speed);
 }
 
 @Override
@@ -27,6 +30,6 @@ public void execute() {
     }
 @Override
     public boolean isFinished() {
-       return true;
+       return false;
     }
 }

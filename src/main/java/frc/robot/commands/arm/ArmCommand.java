@@ -4,10 +4,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public class ArmCommand extends Command {
     private final ArmSubsystem arm;
+    private double speed;
 
 public ArmCommand(ArmSubsystem arm, double speed) {
     this.arm = arm;
     addRequirements(arm);
+    this.speed = speed;
 }
 
 @Override
@@ -17,16 +19,16 @@ public ArmCommand(ArmSubsystem arm, double speed) {
     
 @Override
     public void execute() {
-        arm.setSpeed(0.8);
+        arm.setArm(speed);
     }
     
 @Override
     public void end(boolean interuppted) {
-        arm.setSpeed(0);
+        arm.setArm(0);
      
     }
 @Override
     public boolean isFinished() {
-       return true;
+       return false;
     }
 }
