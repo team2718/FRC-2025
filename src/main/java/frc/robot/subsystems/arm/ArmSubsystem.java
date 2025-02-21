@@ -10,11 +10,13 @@ import static edu.wpi.first.units.Units.Volts;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -35,7 +37,7 @@ public class ArmSubsystem extends SubsystemBase {
     private final SparkMax armMotor;
     private final ProfiledPIDController armVoltagePID;
     private final ArmFeedforward armFeedforward;
-    private final RelativeEncoder armRelativeEncoder;
+    private final SparkAbsoluteEncoder armAbsoluteEncoder;
     
 
 public ArmSubsystem() {
@@ -45,15 +47,17 @@ public ArmSubsystem() {
 
     armConfig.idleMode(IdleMode.kBrake);
 
-   
+    armConfig.inverted(true);
 
     armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    armFeedforward = new ArmFeedforward(0, 0, 0);
-    armVoltagePID = new ProfiledPIDController(0, 0, 0,
-        new TrapezoidProfile.Constraints(0, 0), 0.02);
+    armFeedforward = new ArmFeedforward(0.25, 0.05, 0.08);
+    armVoltagePID = new ProfiledPIDController(0.15, 0, 0.00095,
+        new TrapezoidProfile.Constraints(60, 150), 0.02);
 
-    armRelativeEncoder = armMotor.getEncoder();
+    armVoltagePID.setGoal(90);
+
+    armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
 
 
 }
@@ -70,11 +74,17 @@ public void stopArm() {
 }
 
 public double getArmAngle() {
-    return armRelativeEncoder.getPosition();
+    return armAbsoluteEncoder.getPosition() * 360 + 21;
 }
 
 @Override
 public void periodic() {
+    updateArmLoop();
+    SmartDashboard.putNumber("arm pos", getArmAngle());
+}
+
+public void setArmTargetPosition(double position) {
+    armVoltagePID.setGoal(position);
 }
 
 public void updateArmLoop() {

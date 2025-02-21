@@ -28,6 +28,7 @@ public EndEffectorSubsystem() {
     endeffectormotor1 = new SparkMax(Constants.EndEffectorConstants.endeffectormotor1ID, MotorType.kBrushless);
     SparkMaxConfig endeffectorConfig = new SparkMaxConfig();
     endeffectorConfig.idleMode(IdleMode.kBrake);
+    endeffectorConfig.inverted(true);
     endeffectormotor1.configure(endeffectorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 }
 
