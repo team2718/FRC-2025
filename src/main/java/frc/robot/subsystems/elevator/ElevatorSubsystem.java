@@ -60,6 +60,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         elevatorFeedforward = new ElevatorFeedforward(0, 0.3, 0.001);
         elevatorVoltagePID = new ProfiledPIDController(0.15, 0, 0,
                 new TrapezoidProfile.Constraints( 20, 150), 0.02);
+        elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
 
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
 
@@ -73,6 +74,14 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
         
+    }
+
+    public boolean atPosition() {
+        return elevatorVoltagePID.atGoal();
+    }
+
+    public boolean atPosition(double position) {
+        return Math.abs(getElevatorAngle() - position) < elevatorVoltagePID.getPositionTolerance();
     }
 
     public void stopElevator() {

@@ -38,69 +38,79 @@ public class ArmSubsystem extends SubsystemBase {
     private final ProfiledPIDController armVoltagePID;
     private final ArmFeedforward armFeedforward;
     private final SparkAbsoluteEncoder armAbsoluteEncoder;
-    
 
-public ArmSubsystem() {
-    armMotor = new SparkMax(Constants.ArmConstants.armMotorID, MotorType.kBrushless);
+    public ArmSubsystem() {
+        armMotor = new SparkMax(Constants.ArmConstants.armMotorID, MotorType.kBrushless);
 
-    SparkMaxConfig armConfig = new SparkMaxConfig();
+        SparkMaxConfig armConfig = new SparkMaxConfig();
 
-    armConfig.idleMode(IdleMode.kBrake);
+        armConfig.idleMode(IdleMode.kBrake);
 
-    armConfig.inverted(true);
+        armConfig.inverted(true);
 
-    armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    armFeedforward = new ArmFeedforward(0.25, 0.05, 0.08);
-    armVoltagePID = new ProfiledPIDController(0.15, 0, 0.00095,
-        new TrapezoidProfile.Constraints(60, 150), 0.02);
+        armFeedforward = new ArmFeedforward(0.25, 0.05, 0.08);
+        armVoltagePID = new ProfiledPIDController(0.15, 0, 0.00095,
+                new TrapezoidProfile.Constraints(60, 150), 0.02);
 
-    armVoltagePID.setGoal(90);
+        armVoltagePID.setTolerance(Constants.ArmConstants.armTolerance);
+        armVoltagePID.setGoal(90);
 
-    armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
+        armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
 
+    }
 
-}
+    public void setArm(double speed) {
+        armMotor.set(speed);
 
+    }
 
+    public void stopArm() {
+        armMotor.set(0);
+    }
 
-public void setArm (double speed) {
-    armMotor.set(speed);
-    
-}
+    public double getArmAngle() {
+        return armAbsoluteEncoder.getPosition() * 360 + 21;
+    }
 
-public void stopArm() {
-    armMotor.set(0);
-}
+    @Override
+    public void periodic() {
+        updateArmLoop();
+        SmartDashboard.putNumber("arm pos", getArmAngle());
+    }
 
-public double getArmAngle() {
-    return armAbsoluteEncoder.getPosition() * 360 + 21;
-}
+    public void setArmTargetPosition(double position) {
+        armVoltagePID.setGoal(position);
+    }
 
-@Override
-public void periodic() {
-    updateArmLoop();
-    SmartDashboard.putNumber("arm pos", getArmAngle());
-}
+    public boolean atPosition() {
+        return armVoltagePID.atGoal();
+    }
 
-public void setArmTargetPosition(double position) {
-    armVoltagePID.setGoal(position);
-}
+    public boolean atPosition(double angle) {
+        return Math.abs(getArmAngle() - angle) < armVoltagePID.getPositionTolerance();
+    }
 
-public void updateArmLoop() {
-    double voltage = armVoltagePID.calculate(getArmAngle()) +  armFeedforward.calculate(armVoltagePID.getSetpoint().position, armVoltagePID.getSetpoint().velocity);
-    voltage = Math.max(-7, Math.min(7, voltage));
+    public void setTo90() {
+        setArmTargetPosition(90);
+    }
 
-    setVoltage(Volts.of(voltage));
+    public boolean at90() {
+        return atPosition(90);
+    }
 
-}
+    public void updateArmLoop() {
+        double voltage = armVoltagePID.calculate(getArmAngle())
+                + armFeedforward.calculate(armVoltagePID.getSetpoint().position, armVoltagePID.getSetpoint().velocity);
+        voltage = Math.max(-7, Math.min(7, voltage));
 
-public void setVoltage(Voltage volts) {
-    
+        setVoltage(Volts.of(voltage));
+
+    }
+
+    public void setVoltage(Voltage volts) {
+
         armMotor.setVoltage(volts);
     }
 }
-
-
-
-

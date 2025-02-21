@@ -54,6 +54,7 @@ public final class Constants {
 
   public static final class ArmConstants {
     public static final int armMotorID = 13;
+    public static final double armTolerance = 2;
   }
   
   public static final class EndEffectorConstants {
@@ -62,5 +63,6 @@ public final class Constants {
   public static final class ElevatorConstants {
     public static final int elevatormotor1ID = 11;
     public static final int elevatormotor2ID = 12;
+    public static final double elevatorTolerance = 1;
   }
 }
