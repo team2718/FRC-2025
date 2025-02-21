@@ -55,8 +55,8 @@ public class SuperSystem extends SubsystemBase{
                 elevator.setTargetPosition(0.5);
             }
         } else if (state == SuperStates.CORAL_SCORE) {
-            // First, if the elevator and the arm are BOTH at the wrong position, bring the arm in first
-            if (!arm.atPosition(scoringPosition.getArmAngle()) && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+            // First, if the elevator is at the wrong position, bring the arm in first
+            if (!arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
                 arm.setTo90();
             }
 
@@ -65,8 +65,8 @@ public class SuperSystem extends SubsystemBase{
                 elevator.setTargetPosition(scoringPosition.getElevatorPosition());
             }
 
-            // Finally, if the elevator is at the right spot and the arm is upright, we can score
-            else if (arm.at90() && elevator.atPosition(scoringPosition.getElevatorPosition())) {
+            // Finally, if the elevator is at the right spot, we can score
+            else if (elevator.atPosition(scoringPosition.getElevatorPosition())) {
                 arm.setArmTargetPosition(scoringPosition.getArmAngle());
             }
         }
