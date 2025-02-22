@@ -19,11 +19,14 @@ import frc.robot.subsystems.elevator.ElevatorSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.arm.ArmSubsystem;
 import frc.robot.subsystems.endeffector.EndEffectorSubsystem;
+import frc.robot.subsystems.SuperSystem;
+import frc.robot.subsystems.SuperSystem.ScoringPositions;
 //commands
 import frc.robot.commands.elevator.*;
 import frc.robot.commands.intake.*;
 import frc.robot.commands.arm.*;
 import frc.robot.commands.endeffector.*;
+import frc.robot.commands.scoring.ScoringCommand;
 import java.io.File;
 
 import swervelib.SwerveInputStream;
@@ -45,6 +48,7 @@ public class RobotContainer {
   private final IntakeSubsystem intake = new IntakeSubsystem();
   private final ArmSubsystem arm = new ArmSubsystem();
   private final EndEffectorSubsystem endeffector = new EndEffectorSubsystem();
+  private final SuperSystem supersystem = new SuperSystem(arm, elevator);
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled
@@ -77,7 +81,7 @@ public class RobotContainer {
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
-
+  
   private final ElevatorCommand elevatorL3Position = new ElevatorCommand(elevator, 13.45);
   private final ElevatorCommand elevatorbottomPosition = new ElevatorCommand(elevator, 0.1);
 
@@ -88,6 +92,8 @@ public class RobotContainer {
 
   private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.6);
   private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.6);
+
+  private final ScoringCommand score = new ScoringCommand(supersystem);
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -121,6 +127,8 @@ public class RobotContainer {
 
     driverXbox.rightBumper().whileTrue(runEffector);
     driverXbox.rightTrigger().whileTrue(outtakeEffector);
+
+    driverXbox.leftTrigger().whileTrue(score);
     
  }
   

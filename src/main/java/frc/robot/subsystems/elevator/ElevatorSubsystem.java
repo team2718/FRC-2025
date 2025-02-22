@@ -67,12 +67,21 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     }
 
+
     @Override
     public void periodic() {
         updateElevatorLoop();
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
         
+    }
+
+    public boolean atPosition() {
+        return elevatorVoltagePID.atGoal();
+    }
+
+    public boolean atPosition(double position) {
+        return Math.abs(getElevatorAngle() - position) < elevatorVoltagePID.getPositionTolerance(); 
     }
 
     public void stopElevator() {

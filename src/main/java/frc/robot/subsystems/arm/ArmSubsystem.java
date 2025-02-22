@@ -87,6 +87,22 @@ public void setArmTargetPosition(double position) {
     armVoltagePID.setGoal(position);
 }
 
+public boolean atPosition() {
+    return armVoltagePID.atGoal();
+}
+
+public boolean atPosition(double angle) {
+    return Math.abs(getArmAngle() - angle) < armVoltagePID.getPositionTolerance();
+}
+
+public void setTo90() {
+    setArmTargetPosition(90);
+}
+
+public boolean at90() {
+    return atPosition(90);
+}
+
 public void updateArmLoop() {
     double voltage = armVoltagePID.calculate(getArmAngle()) +  armFeedforward.calculate(armVoltagePID.getSetpoint().position, armVoltagePID.getSetpoint().velocity);
     voltage = Math.max(-7, Math.min(7, voltage));
