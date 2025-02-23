@@ -42,8 +42,8 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
   private final CommandXboxController driverXbox = new CommandXboxController(0);
-  // private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-      // "swerve"));
+  private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
+       "swerve"));
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final IntakeSubsystem intake = new IntakeSubsystem();
   private final ArmSubsystem arm = new ArmSubsystem();
@@ -54,26 +54,26 @@ public class RobotContainer {
    * Converts driver input into a field-relative ChassisSpeeds that is controlled
    * by angular velocity.
    */
-  // SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      // () -> driverXbox.getLeftY() * -1,
-      // () -> driverXbox.getLeftX() * -1)
-      // .withControllerRotationAxis(driverXbox::getRightX)
-      // .deadband(OperatorConstants.DEADBAND)
-      // .scaleTranslation(OperatorConstants.SPEED_MULTIPLIER)
-      // .scaleRotation(OperatorConstants.ROTATION_MULTIPLIER)
-      // .allianceRelativeControl(false);
+   SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
+       () -> driverXbox.getLeftY() * -1,
+       () -> driverXbox.getLeftX() * -1)
+       .withControllerRotationAxis(driverXbox::getRightX)
+       .deadband(OperatorConstants.DEADBAND)
+       .scaleTranslation(OperatorConstants.SPEED_MULTIPLIER)
+       .scaleRotation(OperatorConstants.ROTATION_MULTIPLIER)
+       .allianceRelativeControl(false);
 
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative
    * input stream.
    */
-  // SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
-      // .withControllerHeadingAxis(() -> -driverXbox.getRightX(),
-          // () -> -driverXbox.getRightY())
-      // .headingWhile(true);
+   SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
+       .withControllerHeadingAxis(() -> -driverXbox.getRightX(),
+       () -> -driverXbox.getRightY())
+       .headingWhile(true);
 
   // Drive with right-stick direct angle control
-//  Command driveFieldOrientedDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
+  Command driveFieldOrientedDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
 
   // Drive with right-stick angular velocity control
  // Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
@@ -83,7 +83,10 @@ public class RobotContainer {
 
   
   private final ElevatorCommand elevatorL3Position = new ElevatorCommand(elevator, 13.45);
+   
   private final ElevatorCommand elevatorbottomPosition = new ElevatorCommand(elevator, 0.1);
+
+  private final SSElevatorCommand elevatorL1Command = new SSElevatorCommand(supersystem);
 
   private final IntakeCommand runIntake = new IntakeCommand(intake, 0.8);
 
@@ -115,7 +118,7 @@ public class RobotContainer {
    * Flight joysticks}.
    */
   private void configureBindings() {
-   // drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
+    drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
     // driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
     driverXbox.leftBumper().whileTrue(runIntake);
     
@@ -123,13 +126,13 @@ public class RobotContainer {
     driverXbox.x().whileTrue(runArm90);
     
     driverXbox.a().whileTrue(elevatorbottomPosition);
-    driverXbox.y().whileTrue(elevatorL3Position);
+    //driverXbox.y().whileTrue(elevatorL3Position);
 
     driverXbox.rightBumper().whileTrue(runEffector);
     driverXbox.rightTrigger().whileTrue(outtakeEffector);
 
     driverXbox.leftTrigger().whileTrue(score);
-    
+    driverXbox.y().whileTrue(elevatorL1Command);
  }
   
 
@@ -140,15 +143,15 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-   // return drivebase.getAutonomousCommand("Move 1m");
-   return null;
+    return drivebase.getAutonomousCommand("Move 1m");
+   
   }
 
   public void setDriveMode() {
     configureBindings();
   }
 
-  // public void setMotorBrake(boolean brake) {
-    // drivebase.setMotorBrake(brake);
-  // }
+   public void setMotorBrake(boolean brake) {
+     drivebase.setMotorBrake(brake);
+   }
 }

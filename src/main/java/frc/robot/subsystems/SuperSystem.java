@@ -40,7 +40,7 @@ public class SuperSystem extends SubsystemBase {
 
     private SuperStates state = SuperStates.INTAKE_CORAL;
 
-    private ScoringPositions scoringPosition = ScoringPositions.L1;
+    private ScoringPositions scoringPosition = ScoringPositions.L3;
 
     public SuperSystem(ArmSubsystem arm, ElevatorSubsystem elevator) {
         this.arm = arm;

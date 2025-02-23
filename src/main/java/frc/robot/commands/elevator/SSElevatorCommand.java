@@ -1,26 +1,29 @@
-package frc.robot.commands.scoring;
+package frc.robot.commands.elevator;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.SuperSystem.ScoringPositions;
 
-public class ScoringCommand extends Command {
+public class SSElevatorCommand extends Command{
     private final SuperSystem supersystem;
-    
+    private double position;
 
-public ScoringCommand(SuperSystem supersystem) {
+public SSElevatorCommand(SuperSystem supersystem) {
     this.supersystem = supersystem;
-    
-    addRequirements(supersystem);
-}
+   
 
-@Override 
+    addRequirements(supersystem);
+    }
+    
+@Override
 public void initialize() {
 
 }
 
-@Override 
+@Override
 public void execute() {
-    supersystem.setScoring();
+    supersystem.setScoringPosition(ScoringPositions.L1);
+    
+
 }
 
 @Override
@@ -28,6 +31,7 @@ public void execute() {
         supersystem.setIntake();
      
     }
+
 @Override
     public boolean isFinished() {
        return false;
