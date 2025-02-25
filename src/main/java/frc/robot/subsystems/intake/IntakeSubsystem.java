@@ -27,7 +27,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private final DigitalInput IntakeLimitSwitch;
 
     private enum INTAKE_STATE {
-        INTAKE, HOLD
+        INTAKE, OUTTAKE, HOLD
     };
 
     private INTAKE_STATE intakeState = INTAKE_STATE.HOLD;
@@ -68,6 +68,10 @@ public class IntakeSubsystem extends SubsystemBase {
         intakeState = INTAKE_STATE.INTAKE;
     }
 
+    public void setStateOuttake() {
+        intakeState = INTAKE_STATE.OUTTAKE;
+    }
+
     public void setStateHold() {
         intakeState = INTAKE_STATE.HOLD;
     }
@@ -76,6 +80,18 @@ public class IntakeSubsystem extends SubsystemBase {
         if (hasCoral() && intakeState == INTAKE_STATE.INTAKE) {
             intakeState = INTAKE_STATE.HOLD;
             intakemotor.set(0);
+        }
+
+        switch (intakeState) {
+            case INTAKE:
+                intakemotor.set(0.7);
+                break;
+            case OUTTAKE:
+                intakemotor.set(-0.5);
+                break;
+            default:
+                intakemotor.set(0);
+                break;
         }
     }
 
