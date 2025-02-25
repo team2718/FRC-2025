@@ -13,7 +13,7 @@ public IntakeCommand(IntakeSubsystem intake, double speed) {
 
     @Override
     public void initialize() {
-        
+        intake.setStateIntake();
     }
 
     @Override
@@ -24,12 +24,11 @@ public IntakeCommand(IntakeSubsystem intake, double speed) {
     @Override
     public void end(boolean interuppted) {
         intake.setSpeed(0);
-     
+        intake.setStateHold();
     }
 
     @Override
     public boolean isFinished() {
-        return intake.hasNote(); // the command is finished when the intake has the note
+        return intake.hasCoral(); // the command is finished when the intake has the note
     }
 }
-

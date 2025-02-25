@@ -26,6 +26,11 @@ public class IntakeSubsystem extends SubsystemBase {
     private final SparkMax intakemotor; 
     private final DigitalInput IntakeLimitSwitch;
 
+    private enum INTAKE_STATE {
+        INTAKE, HOLD
+    };
+
+    private INTAKE_STATE intakeState = INTAKE_STATE.HOLD;
 
     public IntakeSubsystem() {
         intakemotor = new SparkMax(Constants.IntakeConstants.intakemotorID, MotorType.kBrushless);
@@ -41,6 +46,7 @@ public class IntakeSubsystem extends SubsystemBase {
        
 
         IntakeLimitSwitch = new DigitalInput(Constants.IntakeConstants.intakeLimitSwitchChannel);
+        
     }
 
     public void setSpeed(double power) {
@@ -57,8 +63,24 @@ public class IntakeSubsystem extends SubsystemBase {
         
     }
 
-    // testing if the limit switch sees the note or not
-    public boolean hasNote() {
+
+    public void setStateIntake() {
+        intakeState = INTAKE_STATE.INTAKE;
+    }
+
+    public void setStateHold() {
+        intakeState = INTAKE_STATE.HOLD;
+    }
+
+    public void stopIntakePeriodic() {
+        if (hasCoral() && intakeState == INTAKE_STATE.INTAKE) {
+            intakeState = INTAKE_STATE.HOLD;
+            intakemotor.set(0);
+        }
+    }
+
+    // testing if the limit switch sees the coral or not
+    public boolean hasCoral() {
         return !IntakeLimitSwitch.get();
     }
 
