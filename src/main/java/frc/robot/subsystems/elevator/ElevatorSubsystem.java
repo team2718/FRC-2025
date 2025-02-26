@@ -1,16 +1,9 @@
 
 package frc.robot.subsystems.elevator;
 
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
@@ -20,16 +13,8 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.revrobotics.RelativeEncoder;
-import edu.wpi.first.units.VoltageUnit;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.config.SparkBaseConfig;
 import static edu.wpi.first.units.Units.Volts;
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
 
 // 2 motors, one is follower, PID, feedforward, hall effect sensor, use relative encoder on lead motor
@@ -44,6 +29,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     private final StatusSignal<Angle> elevatorRelativeEncoder;
     double startingposition = 0;
 
+    public double currentVoltage = 0;
+
     public ElevatorSubsystem() {
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -57,9 +44,9 @@ public class ElevatorSubsystem extends SubsystemBase {
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         
 
-        elevatorFeedforward = new ElevatorFeedforward(0, 0.3, 0.001);
-        elevatorVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-                new TrapezoidProfile.Constraints( 20, 150), 0.02);
+        elevatorFeedforward = new ElevatorFeedforward(0.13, 0.35, 0.115, 0.002);
+        elevatorVoltagePID = new ProfiledPIDController(0.02, 0.0, 0.0,
+                new TrapezoidProfile.Constraints( 70,70), 0.02);
         elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
 
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
@@ -71,9 +58,13 @@ public class ElevatorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         updateElevatorLoop();
+        // setVoltage(Volts.of(currentVoltage));
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
-        
+        SmartDashboard.putNumber("Elevator Velocity", elevatormotor1.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Desired Elevator Position", elevatorVoltagePID.getSetpoint().position);
+        SmartDashboard.putNumber("Desired Elevator Velocity", elevatorVoltagePID.getSetpoint().velocity);
+        // SmartDashboard.putNumber("Elevator Voltage", currentVoltage);
     }
 
     public boolean atPosition() {
@@ -98,7 +89,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public void updateElevatorLoop() {
         double voltage = elevatorVoltagePID.calculate(getElevatorAngle()) + elevatorFeedforward
-                .calculate(elevatorVoltagePID.getSetpoint().position, elevatorVoltagePID.getSetpoint().velocity);
+                .calculate(elevatorVoltagePID.getSetpoint().velocity);
         voltage = Math.max(-7, Math.min(7, voltage));
 
         setVoltage(Volts.of(voltage));

@@ -78,8 +78,8 @@ public class RobotContainer {
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
 
-  private final ElevatorCommand elevatorL3Position = new ElevatorCommand(elevator, 13.45);
-  private final ElevatorCommand elevatorbottomPosition = new ElevatorCommand(elevator, 0.1);
+  private final ElevatorCommand elevatorL3Position = new ElevatorCommand(elevator, 25);
+  private final ElevatorCommand elevatorbottomPosition = new ElevatorCommand(elevator, 1.0);
 
   private final IntakeCommand runIntake = new IntakeCommand(intake, 0.8);
 
@@ -111,17 +111,19 @@ public class RobotContainer {
   private void configureBindings() {
    // drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
     // driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
-    driverXbox.leftBumper().whileTrue(runIntake);
+    // driverXbox.leftBumper().whileTrue(runIntake);
     
-    driverXbox.b().whileTrue(runArm60);
-    driverXbox.x().whileTrue(runArm90);
+    // driverXbox.b().whileTrue(runArm60);
+    // driverXbox.x().whileTrue(runArm90);
     
     driverXbox.a().whileTrue(elevatorbottomPosition);
     driverXbox.y().whileTrue(elevatorL3Position);
 
-    driverXbox.rightBumper().whileTrue(runEffector);
-    driverXbox.rightTrigger().whileTrue(outtakeEffector);
-    
+    // driverXbox.rightBumper().whileTrue(runEffector);
+    // driverXbox.rightTrigger().whileTrue(outtakeEffector);
+
+    // driverXbox.povUp().onTrue(Commands.runOnce(() -> elevator.currentVoltage += 0.02)).debounce(0.1);
+    // driverXbox.povDown().onTrue(Commands.runOnce(() -> elevator.currentVoltage -= 0.02)).debounce(0.1);
  }
   
 

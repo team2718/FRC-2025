@@ -63,6 +63,6 @@ public final class Constants {
   public static final class ElevatorConstants {
     public static final int elevatormotor1ID = 11;
     public static final int elevatormotor2ID = 12;
-    public static final double elevatorTolerance = 1;
+    public static final double elevatorTolerance = 0.5;
   }
 }
