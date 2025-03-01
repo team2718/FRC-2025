@@ -3,6 +3,7 @@ package frc.robot.subsystems.arm;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkFlex;
 import static edu.wpi.first.units.Units.Volts;
@@ -44,22 +45,26 @@ public ArmSubsystem() {
     armMotor = new SparkMax(Constants.ArmConstants.armMotorID, MotorType.kBrushless);
 
     SparkMaxConfig armConfig = new SparkMaxConfig();
+    AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
+    absoluteEncoderConfig.zeroCentered(true);
+    absoluteEncoderConfig.zeroOffset(0.66);
 
-    armConfig.idleMode(IdleMode.kBrake);
+    armConfig.idleMode(IdleMode.kCoast); //TURN BACK TO BRAKE
 
     armConfig.inverted(true);
 
     armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    armFeedforward = new ArmFeedforward(0.25, 0.05, 0.08);
-    armVoltagePID = new ProfiledPIDController(0.15, 0, 0.00095,
+    armFeedforward = new ArmFeedforward(0.1, 0.14, 0.14);
+    armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
         new TrapezoidProfile.Constraints(60, 150), 0.02);
 
     armVoltagePID.setGoal(90);
+    armVoltagePID.setTolerance(2.5);
+
 
     armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
-
-
+    
 }
 
 
@@ -74,7 +79,7 @@ public void stopArm() {
 }
 
 public double getArmAngle() {
-    return armAbsoluteEncoder.getPosition() * 360 + 21;
+    return armAbsoluteEncoder.getPosition() * 360;
 }
 
 @Override

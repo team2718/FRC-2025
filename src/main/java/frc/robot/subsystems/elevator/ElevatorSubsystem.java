@@ -43,10 +43,11 @@ public class ElevatorSubsystem extends SubsystemBase {
     private final ElevatorFeedforward elevatorFeedforward;
     private final StatusSignal<Angle> elevatorRelativeEncoder;
     double startingposition = 0;
+    public double currentVoltage;
 
     public ElevatorSubsystem() {
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
-        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Coast; //TURN BACK TO BRAKE
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
 
@@ -54,13 +55,13 @@ public class ElevatorSubsystem extends SubsystemBase {
         elevatormotor2.setControl(voltageControl.withOutput(0.0));
 
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
-        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Coast; //TURN BACK TO BRAKE
         
 
-        elevatorFeedforward = new ElevatorFeedforward(0, 0.3, 0.001);
-        elevatorVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-                new TrapezoidProfile.Constraints( 20, 150), 0.02);
-
+        elevatorFeedforward = new ElevatorFeedforward(0.13, 0.35, 0.115, 0.002);
+        elevatorVoltagePID = new ProfiledPIDController(0.02, 0, 0,
+                new TrapezoidProfile.Constraints( 70, 70), 0.02);
+        elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
 
         startingposition = elevatorRelativeEncoder.getValueAsDouble();
@@ -73,7 +74,9 @@ public class ElevatorSubsystem extends SubsystemBase {
         updateElevatorLoop();
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
-        
+        SmartDashboard.putNumber("Elevator Velocity", elevatormotor1.getVelocity().getValueAsDouble());
+        SmartDashboard.putNumber("Desired Elevator Position", elevatorVoltagePID.getSetpoint().position);
+        SmartDashboard.putNumber("Desired Elevator Velocity", elevatorVoltagePID.getSetpoint().velocity);
     }
 
     public boolean atPosition() {
@@ -98,7 +101,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public void updateElevatorLoop() {
         double voltage = elevatorVoltagePID.calculate(getElevatorAngle()) + elevatorFeedforward
-                .calculate(elevatorVoltagePID.getSetpoint().position, elevatorVoltagePID.getSetpoint().velocity);
+                .calculate(elevatorVoltagePID.getSetpoint().velocity);
         voltage = Math.max(-7, Math.min(7, voltage));
 
         setVoltage(Volts.of(voltage));

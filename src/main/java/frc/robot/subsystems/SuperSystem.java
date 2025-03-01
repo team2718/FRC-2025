@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.arm.ArmSubsystem;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
@@ -49,6 +50,9 @@ public class SuperSystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        SmartDashboard.putString("Current Scoring State", this.scoringPosition.name());
+        SmartDashboard.putString("Current Super State", this.state.name());
+
         if (state == SuperStates.INTAKE_CORAL) {
             // Get the arm back in first, then move the elevator down
             arm.setTo90();

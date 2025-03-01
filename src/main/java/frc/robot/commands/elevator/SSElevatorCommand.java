@@ -5,14 +5,12 @@ import frc.robot.subsystems.SuperSystem.ScoringPositions;
 
 public class SSElevatorCommand extends Command{
     private final SuperSystem supersystem;
-    private double position;
+    private ScoringPositions positions;
 
-public SSElevatorCommand(SuperSystem supersystem) {
+public SSElevatorCommand(SuperSystem supersystem, ScoringPositions positions) {
     this.supersystem = supersystem;
-   
-
-    addRequirements(supersystem);
-    }
+    this.positions = positions;
+}
     
 @Override
 public void initialize() {
@@ -21,14 +19,14 @@ public void initialize() {
 
 @Override
 public void execute() {
-    supersystem.setScoringPosition(ScoringPositions.L1);
+    supersystem.setScoringPosition(this.positions);
     
 
 }
 
 @Override
     public void end(boolean interuppted) {
-        supersystem.setIntake();
+        // supersystem.setIntake();
      
     }
 
