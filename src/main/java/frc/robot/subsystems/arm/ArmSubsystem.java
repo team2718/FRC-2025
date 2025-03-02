@@ -49,15 +49,15 @@ public ArmSubsystem() {
     absoluteEncoderConfig.zeroCentered(true);
     absoluteEncoderConfig.zeroOffset(0.66);
 
-    armConfig.idleMode(IdleMode.kCoast); //TURN BACK TO BRAKE 
+    armConfig.idleMode(IdleMode.kBrake);
     armConfig.smartCurrentLimit(20);
     armConfig.inverted(true);
 
     armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     armFeedforward = new ArmFeedforward(0.17, 0.05, 0.13);
-    armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-        new TrapezoidProfile.Constraints(90, 150), 0.02);
+    armVoltagePID = new ProfiledPIDController(0.1, 0, 0,
+        new TrapezoidProfile.Constraints(100, 130), 0.02);
 
     armVoltagePID.setGoal(90);
     armVoltagePID.setTolerance(2.5);
@@ -84,7 +84,7 @@ public double getArmAngle() {
 
 @Override
 public void periodic() {
-    //  updateArmLoop();
+     updateArmLoop();
 
 
     SmartDashboard.putNumber("Arm Position", getArmAngle());

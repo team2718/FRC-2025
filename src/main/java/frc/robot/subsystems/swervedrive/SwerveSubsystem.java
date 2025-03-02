@@ -81,7 +81,9 @@ public class SwerveSubsystem extends SubsystemBase {
    *
    * @param directory Directory of swerve drive config files.
    */
-  public SwerveSubsystem(File directory) {    
+  public SwerveSubsystem(File directory, Vision vision) {  
+    this.vision = vision;
+
     if (Constants.COMPETITION_MODE) {
       SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW;
     } else {
@@ -113,13 +115,6 @@ public class SwerveSubsystem extends SubsystemBase {
         Constants.MAX_SPEED,
         new Pose2d(new Translation2d(Meter.of(2), Meter.of(0)),
             Rotation2d.fromDegrees(0)));
-  }
-
-  /**
-   * Setup the photon vision class.
-   */
-  public void setupPhotonVision() {
-    vision = new Vision(swerveDrive::getPose, swerveDrive.field);
   }
 
   @Override

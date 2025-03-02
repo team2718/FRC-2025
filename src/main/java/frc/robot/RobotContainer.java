@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 //subsystems
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.arm.ArmSubsystem;
@@ -28,6 +29,7 @@ import frc.robot.commands.intake.*;
 import frc.robot.commands.arm.*;
 import frc.robot.commands.climber.ClimberCommand;
 import frc.robot.commands.endeffector.*;
+import frc.robot.commands.scoring.AutoScoringCommand;
 import frc.robot.commands.scoring.ScoringCommand;
 import java.io.File;
 
@@ -44,9 +46,13 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
   private final CommandXboxController driverXbox = new CommandXboxController(0);
-  private final CommandXboxController secondXbox = new CommandXboxController(1);
+  // private final CommandXboxController secondXbox = new CommandXboxController(1);
+
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-       "swerve"));
+       "swerve"), null);
+
+  // private final Vision vision = new Vision();
+    
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final IntakeSubsystem intake = new IntakeSubsystem();
   private final ArmSubsystem arm = new ArmSubsystem();
@@ -85,34 +91,26 @@ public class RobotContainer {
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
-  
-  private final ElevatorCommand elevatorL3Position = new ElevatorCommand(elevator, 25);
-   
-  private final ElevatorCommand elevatorbottomPosition = new ElevatorCommand(elevator, 1.0);
-
-  private final SSElevatorCommand elevatorL4Command = new SSElevatorCommand(supersystem, ScoringPositions.L4);
-  private final SSElevatorCommand elevatorL3Command = new SSElevatorCommand(supersystem, ScoringPositions.L3);
-  private final SSElevatorCommand elevatorL2Command = new SSElevatorCommand(supersystem, ScoringPositions.L2);
-  private final SSElevatorCommand elevatorL1Command = new SSElevatorCommand(supersystem, ScoringPositions.L1);
-
   private final IntakeCommand runIntake = new IntakeCommand(intake, 0.3);
   private final IntakeCommand runOutake = new IntakeCommand(intake, -0.4);
-
-  private final ArmCommand runArm90 = new ArmCommand(arm, 90);
-  private final ArmCommand runArm60 = new ArmCommand(arm, 40.52);
 
   private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.4);
   private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.1);
 
   private final ScoringCommand score = new ScoringCommand(supersystem, arm, elevator);
+  private final AutoScoringCommand autoScore = new AutoScoringCommand(supersystem, arm, elevator, null);
 
   private final ClimberCommand climbout = new ClimberCommand(climber, 0.5);
   private final ClimberCommand climbin = new ClimberCommand(climber, -0.5);
+
+  private int position = 2;
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
 
   public RobotContainer() {
+    supersystem.setScoringPosition(ScoringPositions.L2);
   }
 
   /**
@@ -130,38 +128,42 @@ public class RobotContainer {
    */
   private void configureBindings() {
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
-     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
-    driverXbox.leftBumper().whileTrue(runIntake);
-    driverXbox.leftTrigger().whileTrue(runOutake);
+    driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
-    driverXbox.rightTrigger().whileTrue(outtakeEffector);
-    driverXbox.rightBumper().whileTrue(runEffector);
+    driverXbox.leftTrigger().whileTrue(runIntake.alongWith(runEffector));
+    driverXbox.leftBumper().whileTrue(runOutake.alongWith(outtakeEffector));
 
-    driverXbox.b().whileTrue(runArm60);
-    driverXbox.x().whileTrue(runArm90);
-    
-    driverXbox.a().whileTrue(elevatorbottomPosition);
-    driverXbox.y().whileTrue(elevatorL3Position);
+    driverXbox.rightTrigger().whileTrue(score);
+    // driverXbox.rightBumper().whileTrue(autoScore);
 
-    secondXbox.povUp().onTrue(Commands.runOnce(() -> elevator.incrementGoal())).debounce(0.1);
-    secondXbox.povDown().onTrue(Commands.runOnce(() -> elevator.decrementGoal())).debounce(0.1);
-    
-    
-
-    secondXbox.leftBumper().whileTrue(score);
-
-
-    secondXbox.x().whileTrue(elevatorL4Command);
-    secondXbox.y().whileTrue(elevatorL3Command);
-    secondXbox.b().whileTrue(elevatorL2Command);
-    secondXbox.a().whileTrue(elevatorL1Command);
-
-    secondXbox.rightBumper().whileTrue(climbout);
-    secondXbox.rightTrigger().whileTrue(climbin);
-
-   
+    driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.1);
+    driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.1);
  }
   
+  private void adjPosition(int change) {
+    position += change;
+
+    if (position < 1) {
+      position = 1;
+    } else if (position > 4) {
+      position = 4;
+    }
+
+    switch (position) {
+      case 1:
+        supersystem.setScoringPosition(ScoringPositions.L1);
+        break;
+      case 2:
+        supersystem.setScoringPosition(ScoringPositions.L2);
+        break;
+      case 3:
+        supersystem.setScoringPosition(ScoringPositions.L3);
+        break;
+      case 4:
+        supersystem.setScoringPosition(ScoringPositions.L4);
+        break;
+    }
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -181,10 +183,6 @@ public class RobotContainer {
   public void resetProfilePIDs() {
     elevator.resetProfilePID();
     arm.resetProfilePID();
-  }
-
-  public void setFlapperBrake(boolean brake) {
-    intake.setFlapperBrake(brake);
   }
 
    public void setMotorBrake(boolean brake) {

@@ -81,8 +81,6 @@ public class Robot extends TimedRobot
     // m_robotContainer.setMotorBrake(true);
     disabledTimer.reset();
     disabledTimer.start();
-
-    m_robotContainer.setFlapperBrake(false);
   }
 
   @Override
@@ -92,6 +90,7 @@ public class Robot extends TimedRobot
      {
        m_robotContainer.setMotorBrake(false);
        disabledTimer.stop();
+       disabledTimer.reset();
      }
   }
 
@@ -103,8 +102,7 @@ public class Robot extends TimedRobot
   {
     // m_robotContainer.setMotorBrake(true);
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-    m_robotContainer.setFlapperBrake(true);
-
+    
     m_robotContainer.resetProfilePIDs();
 
     // schedule the autonomous command (example)
@@ -137,7 +135,6 @@ public class Robot extends TimedRobot
       CommandScheduler.getInstance().cancelAll();
     }
 
-    m_robotContainer.setFlapperBrake(true);
     m_robotContainer.setDriveMode();
     m_robotContainer.resetProfilePIDs();
   }

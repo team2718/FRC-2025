@@ -48,21 +48,18 @@ public class ElevatorSubsystem extends SubsystemBase {
     public double targetSetpointGoalThing = 0.5;
 
     public ElevatorSubsystem() {
-        talon_config.CurrentLimits.StatorCurrentLimit = 40;
+        talon_config.CurrentLimits.StatorCurrentLimit = 30;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake; 
+
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
 
         elevatormotor1.setControl(voltageControl.withOutput(0.0));
         elevatormotor2.setControl(voltageControl.withOutput(0.0));
 
-        talon_config.CurrentLimits.StatorCurrentLimit = 40;
-        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake; 
-        
-
-        elevatorFeedforward = new ElevatorFeedforward(0.12, 0.36, 0.11, 0.002);
-        elevatorVoltagePID = new ProfiledPIDController(0.03, 0, 0,
-                new TrapezoidProfile.Constraints( 70, 70), 0.02);
+        elevatorFeedforward = new ElevatorFeedforward(0.11, 0.37, 0.12, 0.002);
+        elevatorVoltagePID = new ProfiledPIDController(0.05, 0, 0,
+                new TrapezoidProfile.Constraints( 70, 80), 0.02);
         elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
 
@@ -119,11 +116,6 @@ public class ElevatorSubsystem extends SubsystemBase {
     public void updateElevatorLoop() {
         double voltage = elevatorVoltagePID.calculate(getElevatorAngle()) + elevatorFeedforward
                 .calculate(elevatorVoltagePID.getSetpoint().velocity);
-
-        // horrible disgusting bad hack
-        // if (getElevatorAngle() < 1.5 && voltage > 0) {
-        //     voltage = voltage * 1.5;
-        // }
 
         voltage = Math.max(-7, Math.min(7, voltage));
 

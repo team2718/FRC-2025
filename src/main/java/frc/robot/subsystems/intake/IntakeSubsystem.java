@@ -38,10 +38,9 @@ public class IntakeSubsystem extends SubsystemBase {
 
         SparkMaxConfig intakeConfig = new SparkMaxConfig();
         flapperConfig = new SparkMaxConfig();
-        intakeConfig.smartCurrentLimit(10);
 
-        intakeConfig.inverted(false).idleMode(IdleMode.kBrake);
-        flapperConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(2);
+        intakeConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(10);
+        flapperConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(2);
 
         intakemotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         flappermotor.configure(flapperConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -51,13 +50,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-
-        if (flappermotor.getOutputCurrent() > 1.0 || flapperset) {
-            flappermotor.set(0.1);
-            flapperset = true;
-        } else {
-            moveFlapper(0.5);
-        }
+        flappermotor.set(0.1);
     }
 
     public void setFlapperBrake(boolean brake) {
