@@ -47,17 +47,18 @@ public ArmSubsystem() {
     SparkMaxConfig armConfig = new SparkMaxConfig();
     AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
     absoluteEncoderConfig.zeroCentered(true);
-    absoluteEncoderConfig.zeroOffset(0.65);
+    absoluteEncoderConfig.zeroOffset(0.0);
 
     armConfig.idleMode(IdleMode.kBrake);
     armConfig.smartCurrentLimit(20);
     armConfig.inverted(true);
+    armConfig.absoluteEncoder.apply(absoluteEncoderConfig);
 
     armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     armFeedforward = new ArmFeedforward(0.165, 0.055, 0.13);
-    armVoltagePID = new ProfiledPIDController(0.2, 0, 0,
-        new TrapezoidProfile.Constraints(140, 130), 0.02);
+    armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
+        new TrapezoidProfile.Constraints(100, 100), 0.02);
 
     armVoltagePID.setGoal(90);
     armVoltagePID.setTolerance(3.5);
@@ -79,7 +80,12 @@ public void stopArm() {
 }
 
 public double getArmAngle() {
-    return armAbsoluteEncoder.getPosition() * 360;
+    double degrees = (armAbsoluteEncoder.getPosition() - 0.67) * 360;
+    if (degrees < 0) {
+        degrees += 360;
+    }
+
+    return degrees;
 }
 
 @Override
@@ -107,7 +113,7 @@ public boolean atPosition(double angle) {
 }
 
 public void setTo90() {
-    setArmTargetPosition(90);
+    setArmTargetPosition(85);
 }
 
 public void setSafeRaising() {
@@ -115,7 +121,7 @@ public void setSafeRaising() {
 }
 
 public boolean at90() {
-    return atPosition(90);
+    return atPosition(85);
 }
 
 public boolean atSafeRaising() {

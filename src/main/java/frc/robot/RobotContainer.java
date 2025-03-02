@@ -99,7 +99,7 @@ public class RobotContainer {
   private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.2);
 
   private final ScoringCommand score = new ScoringCommand(supersystem, arm, elevator);
-  private final AutoScoringCommand autoScore = new AutoScoringCommand(supersystem, drivebase, arm, elevator, vision);
+  private final AutoScoringCommand autoScore = new AutoScoringCommand(supersystem, drivebase, arm, elevator, endeffector, vision);
 
   private final ClimberCommand climbout = new ClimberCommand(climber, 0.5);
   private final ClimberCommand climbin = new ClimberCommand(climber, -0.5);
@@ -111,6 +111,7 @@ public class RobotContainer {
    */
 
   public RobotContainer() {
+    configureBindings();
     supersystem.setScoringPosition(ScoringPositions.L3);
   }
 
@@ -128,6 +129,7 @@ public class RobotContainer {
    * Flight joysticks}.
    */
   private void configureBindings() {
+
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
@@ -137,11 +139,13 @@ public class RobotContainer {
     driverXbox.rightTrigger().whileTrue(score);
     driverXbox.rightBumper().whileTrue(autoScore);
 
-    driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.1);
-    driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.1);
+    driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.4);
+    driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.4);
 
-    driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(false))).debounce(0.1);
-    driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(true))).debounce(0.1);
+    driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(false))).debounce(0.4);
+    driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(true))).debounce(0.4);
+
+    elevator.resetPosition();
  }
   
   private void adjPosition(int change) {
@@ -189,11 +193,6 @@ public class RobotContainer {
     SmartDashboard.putNumber("X", vision.getVisionX());
     SmartDashboard.putNumber("Y", vision.getVisionY());
     SmartDashboard.putNumber("Theta", vision.getVisionTheta());
-    SmartDashboard.putNumber("Num Targets", vision.getNumTargets());
-  }
-
-  public void setDriveMode() {
-    configureBindings();
   }
 
   public void resetProfilePIDs() {

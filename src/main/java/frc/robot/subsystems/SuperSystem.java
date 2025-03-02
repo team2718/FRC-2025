@@ -15,9 +15,9 @@ public class SuperSystem extends SubsystemBase {
 
     public enum ScoringPositions {
         L1(3, 38.1),
-        L2(5.3, 43),
-        L3(15.5, 43.7),
-        L4(29.0, 55);
+        L2(6.0, 35),
+        L3(15.5, 35),
+        L4(29.0, 28);
 
         private double elevator_position;
         private double arm_angle;
@@ -62,7 +62,7 @@ public class SuperSystem extends SubsystemBase {
             arm.setTo90();
 
             if (arm.at90()) {
-                elevator.setTargetPosition(1.1);
+                elevator.setTargetPosition(0.7);
             }
         } else if (state == SuperStates.SCORE_CORAL || state == SuperStates.MOVE_AUTO) {
             // First, if the elevator is at the wrong position, bring the arm in first

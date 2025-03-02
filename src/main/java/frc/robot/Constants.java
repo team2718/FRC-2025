@@ -46,7 +46,7 @@ public final class Constants {
   public static class OperatorConstants {
 
     public static final double SPEED_MULTIPLIER = 0.6;
-    public static final double ROTATION_MULTIPLIER = 1.0;
+    public static final double ROTATION_MULTIPLIER = 0.6;
     public static final double DEADBAND = 0.3;
   }
 

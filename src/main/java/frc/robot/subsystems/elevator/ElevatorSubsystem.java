@@ -62,9 +62,6 @@ public class ElevatorSubsystem extends SubsystemBase {
                 new TrapezoidProfile.Constraints( 40, 40), 0.02);
         elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
-
-        startingposition = elevatorRelativeEncoder.getValueAsDouble();
-
     }
 
 
@@ -76,6 +73,10 @@ public class ElevatorSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Elevator Velocity", elevatormotor1.getVelocity().getValueAsDouble());
         SmartDashboard.putNumber("Desired Elevator Position", elevatorVoltagePID.getSetpoint().position);
         SmartDashboard.putNumber("Desired Elevator Velocity", elevatorVoltagePID.getSetpoint().velocity);
+    }
+
+    public void resetPosition() {
+        startingposition = elevatorRelativeEncoder.getValueAsDouble();
     }
 
     public boolean atPosition() {
@@ -117,7 +118,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         double voltage = elevatorVoltagePID.calculate(getElevatorAngle()) + elevatorFeedforward
                 .calculate(elevatorVoltagePID.getSetpoint().velocity);
 
-        voltage = Math.max(-7, Math.min(7, voltage));
+        voltage = Math.max(-4, Math.min(5, voltage));
 
         setVoltage(Volts.of(voltage));
 
