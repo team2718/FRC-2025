@@ -39,7 +39,7 @@ public class IntakeSubsystem extends SubsystemBase {
         SparkMaxConfig intakeConfig = new SparkMaxConfig();
         flapperConfig = new SparkMaxConfig();
 
-        intakeConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(10);
+        intakeConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(20);
         flapperConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(2);
 
         intakemotor.configure(intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

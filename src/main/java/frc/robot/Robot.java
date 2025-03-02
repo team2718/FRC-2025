@@ -86,6 +86,7 @@ public class Robot extends TimedRobot
   @Override
   public void disabledPeriodic()
   {
+    m_robotContainer.updateOdometry();
      if (disabledTimer.hasElapsed(Constants.DrivebaseConstants.WHEEL_LOCK_TIME))
      {
        m_robotContainer.setMotorBrake(false);
@@ -118,6 +119,7 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic()
   {
+    m_robotContainer.updateOdometry();
   }
 
   @Override
@@ -145,6 +147,7 @@ public class Robot extends TimedRobot
   @Override
   public void teleopPeriodic()
   {
+    m_robotContainer.updateOdometry();
   }
 
   @Override

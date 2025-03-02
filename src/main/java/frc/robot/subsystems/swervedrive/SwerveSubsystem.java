@@ -36,8 +36,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.Vision.Cameras;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -71,18 +69,14 @@ public class SwerveSubsystem extends SubsystemBase {
    * Enable vision odometry updates while driving.
    */
   private final boolean visionDriveTest = false;
-  /**
-   * PhotonVision class to keep an accurate odometry.
-   */
-  private Vision vision;
+
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
    *
    * @param directory Directory of swerve drive config files.
    */
-  public SwerveSubsystem(File directory, Vision vision) {  
-    this.vision = vision;
+  public SwerveSubsystem(File directory) {  
 
     if (Constants.COMPETITION_MODE) {
       SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW;
@@ -122,7 +116,6 @@ public class SwerveSubsystem extends SubsystemBase {
     // When vision is enabled we must manually update odometry in SwerveDrive
     if (visionDriveTest) {
       swerveDrive.updateOdometry();
-      vision.updatePoseEstimation(swerveDrive);
     }
   }
 
@@ -238,27 +231,6 @@ public class SwerveSubsystem extends SubsystemBase {
               getHeading());
           drive(speeds);
         }).until(() -> Math.abs(getSpeakerYaw().minus(getHeading()).getDegrees()) < tolerance);
-  }
-
-  /**
-   * Aim the robot at the target returned by PhotonVision.
-   *
-   * @return A {@link Command} which will run the alignment.
-   */
-  public Command aimAtTarget(Cameras camera) {
-
-    return run(() -> {
-      Optional<PhotonPipelineResult> resultO = camera.getBestResult();
-      if (resultO.isPresent()) {
-        var result = resultO.get();
-        if (result.hasTargets()) {
-          drive(getTargetSpeeds(0,
-              0,
-              Rotation2d.fromDegrees(result.getBestTarget()
-                  .getYaw()))); // Not sure if this will work, more math may be required.
-        }
-      }
-    });
   }
 
   /**

@@ -5,9 +5,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public class IntakeCommand extends Command{
     private final IntakeSubsystem intake;
+    private double speed;
 
 public IntakeCommand(IntakeSubsystem intake, double speed) {
         this.intake = intake;
+        this.speed = speed;
         addRequirements(intake);
     }
 
@@ -18,7 +20,7 @@ public IntakeCommand(IntakeSubsystem intake, double speed) {
 
     @Override
     public void execute() {
-        intake.setSpeed(0.8);
+        intake.setSpeed(speed);
     }
 
     @Override

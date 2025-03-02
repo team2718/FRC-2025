@@ -48,7 +48,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     public double targetSetpointGoalThing = 0.5;
 
     public ElevatorSubsystem() {
-        talon_config.CurrentLimits.StatorCurrentLimit = 30;
+        talon_config.CurrentLimits.StatorCurrentLimit = 40;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake; 
 
         elevatormotor1.getConfigurator().apply(talon_config);
@@ -57,9 +57,9 @@ public class ElevatorSubsystem extends SubsystemBase {
         elevatormotor1.setControl(voltageControl.withOutput(0.0));
         elevatormotor2.setControl(voltageControl.withOutput(0.0));
 
-        elevatorFeedforward = new ElevatorFeedforward(0.11, 0.37, 0.12, 0.002);
-        elevatorVoltagePID = new ProfiledPIDController(0.05, 0, 0,
-                new TrapezoidProfile.Constraints( 70, 80), 0.02);
+        elevatorFeedforward = new ElevatorFeedforward(0.125, 0.355, 0.115, 0.0);
+        elevatorVoltagePID = new ProfiledPIDController(0.1, 0, 0,
+                new TrapezoidProfile.Constraints( 40, 40), 0.02);
         elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
 

@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -49,9 +50,9 @@ public class RobotContainer {
   // private final CommandXboxController secondXbox = new CommandXboxController(1);
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-       "swerve"), null);
+       "swerve"));
 
-  // private final Vision vision = new Vision();
+  private final Vision vision = new Vision(drivebase::getPose, drivebase.getSwerveDrive().field);
     
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final IntakeSubsystem intake = new IntakeSubsystem();
@@ -67,7 +68,7 @@ public class RobotContainer {
     SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
         () -> driverXbox.getLeftY() * -1,
         () -> driverXbox.getLeftX() * -1)
-        .withControllerRotationAxis(driverXbox::getRightX)
+        .withControllerRotationAxis(() -> driverXbox.getRightX() * -1)
         .deadband(OperatorConstants.DEADBAND)
         .scaleTranslation(OperatorConstants.SPEED_MULTIPLIER)
         .scaleRotation(OperatorConstants.ROTATION_MULTIPLIER)
@@ -91,26 +92,26 @@ public class RobotContainer {
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
 
-  private final IntakeCommand runIntake = new IntakeCommand(intake, 0.3);
-  private final IntakeCommand runOutake = new IntakeCommand(intake, -0.4);
+  private final IntakeCommand runIntake = new IntakeCommand(intake, 0.45);
+  private final IntakeCommand runOutake = new IntakeCommand(intake, -0.5);
 
-  private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.4);
-  private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.1);
+  private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.9);
+  private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.2);
 
   private final ScoringCommand score = new ScoringCommand(supersystem, arm, elevator);
-  private final AutoScoringCommand autoScore = new AutoScoringCommand(supersystem, arm, elevator, null);
+  private final AutoScoringCommand autoScore = new AutoScoringCommand(supersystem, drivebase, arm, elevator, vision);
 
   private final ClimberCommand climbout = new ClimberCommand(climber, 0.5);
   private final ClimberCommand climbin = new ClimberCommand(climber, -0.5);
 
-  private int position = 2;
+  private int position = 3;
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
 
   public RobotContainer() {
-    supersystem.setScoringPosition(ScoringPositions.L2);
+    supersystem.setScoringPosition(ScoringPositions.L3);
   }
 
   /**
@@ -130,14 +131,17 @@ public class RobotContainer {
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
-    driverXbox.leftTrigger().whileTrue(runIntake.alongWith(runEffector));
-    driverXbox.leftBumper().whileTrue(runOutake.alongWith(outtakeEffector));
+    driverXbox.leftTrigger().whileTrue(new IntakeCommand(intake, 0.45).alongWith(new EndEffectorCommand(endeffector, 0.9)));
+    driverXbox.leftBumper().whileTrue(new IntakeCommand(intake, -0.5).alongWith(new EndEffectorCommand(endeffector, -0.15)));
 
     driverXbox.rightTrigger().whileTrue(score);
-    // driverXbox.rightBumper().whileTrue(autoScore);
+    driverXbox.rightBumper().whileTrue(autoScore);
 
     driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.1);
     driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.1);
+
+    driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(false))).debounce(0.1);
+    driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(true))).debounce(0.1);
  }
   
   private void adjPosition(int change) {
@@ -163,6 +167,9 @@ public class RobotContainer {
         supersystem.setScoringPosition(ScoringPositions.L4);
         break;
     }
+
+    elevator.resetProfilePID();
+    arm.resetProfilePID();
   }
 
   /**
@@ -174,6 +181,15 @@ public class RobotContainer {
     // An example command will be run in autonomous
   //  return drivebase.getAutonomousCommand("Move 1m");
    return null;
+  }
+
+  public void updateOdometry() {
+    vision.updatePoseEstimation(drivebase.getSwerveDrive());
+
+    SmartDashboard.putNumber("X", vision.getVisionX());
+    SmartDashboard.putNumber("Y", vision.getVisionY());
+    SmartDashboard.putNumber("Theta", vision.getVisionTheta());
+    SmartDashboard.putNumber("Num Targets", vision.getNumTargets());
   }
 
   public void setDriveMode() {

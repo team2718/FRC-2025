@@ -9,14 +9,15 @@ public class SuperSystem extends SubsystemBase {
 
     private enum SuperStates {
         INTAKE_CORAL,
-        SCORE_CORAL
+        SCORE_CORAL,
+        MOVE_AUTO
     }
 
     public enum ScoringPositions {
         L1(3, 38.1),
         L2(5.3, 43),
         L3(15.5, 43.7),
-        L4(28.5, 45.8);
+        L4(29.0, 55);
 
         private double elevator_position;
         private double arm_angle;
@@ -43,40 +44,43 @@ public class SuperSystem extends SubsystemBase {
 
     private ScoringPositions scoringPosition = ScoringPositions.L3;
 
+    private boolean scoringLeft = true;
+
     public SuperSystem(ArmSubsystem arm, ElevatorSubsystem elevator) {
         this.arm = arm;
         this.elevator = elevator;
     }
 
-     @Override
-     public void periodic() {
-         SmartDashboard.putString("Current Scoring State", this.scoringPosition.name());
-         SmartDashboard.putString("Current Super State", this.state.name());
+    @Override
+    public void periodic() {
+        SmartDashboard.putString("Current Scoring State", this.scoringPosition.name());
+        SmartDashboard.putString("Current Super State", this.state.name());
+        SmartDashboard.putString("Scoring Left/Right", this.scoringLeft ? "Left" : "Right");
 
-         if (state == SuperStates.INTAKE_CORAL) {
-    //         // Get the arm back in first, then move the elevator down
-             arm.setTo90();
+        if (state == SuperStates.INTAKE_CORAL) {
+            // Get the arm back in first, then move the elevator down
+            arm.setTo90();
 
-             if (arm.at90()) {
-                 elevator.setTargetPosition(1.0);
-             }
-         } else if (state == SuperStates.SCORE_CORAL) {
-    //         // First, if the elevator is at the wrong position, bring the arm in first
-             if (!arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
-                 arm.setTo90();
-             }
+            if (arm.at90()) {
+                elevator.setTargetPosition(1.1);
+            }
+        } else if (state == SuperStates.SCORE_CORAL || state == SuperStates.MOVE_AUTO) {
+            // First, if the elevator is at the wrong position, bring the arm in first
+            if (!arm.atSafeRaising() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+                arm.setSafeRaising();
+            }
 
-    //         // If the arm is upright, then we can move the elevator
-             else if (arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
-                 elevator.setTargetPosition(scoringPosition.getElevatorPosition());
-             }
+            // If the arm is upright, then we can move the elevator
+            else if (arm.atSafeRaising() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+                elevator.setTargetPosition(scoringPosition.getElevatorPosition());
+            }
 
-    //         // Finally, if the elevator is at the right spot, we can score
-             else if (elevator.atPosition(scoringPosition.getElevatorPosition())) {
-                 arm.setArmTargetPosition(scoringPosition.getArmAngle());
-             }
-         }
-     }
+            // Finally, if the elevator is at the right spot, we can score
+            else if (state == SuperStates.SCORE_CORAL && elevator.atPosition(scoringPosition.getElevatorPosition())) {
+                arm.setArmTargetPosition(scoringPosition.getArmAngle());
+            }
+        }
+    }
 
     public void setIntake() {
         state = SuperStates.INTAKE_CORAL;
@@ -88,5 +92,17 @@ public class SuperSystem extends SubsystemBase {
 
     public void setScoring() {
         state = SuperStates.SCORE_CORAL;
+    }
+
+    public void setMoveAuto() {
+        state = SuperStates.MOVE_AUTO;
+    }
+
+    public boolean isScoringLeft() {
+        return scoringLeft;
+    }
+
+    public void setScoringLeft(boolean scoringLeft) {
+        this.scoringLeft = scoringLeft;
     }
 }
