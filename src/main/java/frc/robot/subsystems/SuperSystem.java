@@ -13,10 +13,10 @@ public class SuperSystem extends SubsystemBase {
     }
 
     public enum ScoringPositions {
-        L1(10.0, 45.0),
-        L2(15.0, 60.0),
-        L3(20.0, 70.0),
-        L4(25.0, 80.0);
+        L1(3, 38.1),
+        L2(5.3, 43),
+        L3(15.5, 43.7),
+        L4(28.5, 45.8);
 
         private double elevator_position;
         private double arm_angle;
@@ -48,35 +48,35 @@ public class SuperSystem extends SubsystemBase {
         this.elevator = elevator;
     }
 
-    @Override
-    public void periodic() {
-        SmartDashboard.putString("Current Scoring State", this.scoringPosition.name());
-        SmartDashboard.putString("Current Super State", this.state.name());
+     @Override
+     public void periodic() {
+         SmartDashboard.putString("Current Scoring State", this.scoringPosition.name());
+         SmartDashboard.putString("Current Super State", this.state.name());
 
-        if (state == SuperStates.INTAKE_CORAL) {
-            // Get the arm back in first, then move the elevator down
-            arm.setTo90();
+         if (state == SuperStates.INTAKE_CORAL) {
+    //         // Get the arm back in first, then move the elevator down
+             arm.setTo90();
 
-            if (arm.at90()) {
-                elevator.setTargetPosition(0.5);
-            }
-        } else if (state == SuperStates.SCORE_CORAL) {
-            // First, if the elevator is at the wrong position, bring the arm in first
-            if (!arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
-                arm.setTo90();
-            }
+             if (arm.at90()) {
+                 elevator.setTargetPosition(1.0);
+             }
+         } else if (state == SuperStates.SCORE_CORAL) {
+    //         // First, if the elevator is at the wrong position, bring the arm in first
+             if (!arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+                 arm.setTo90();
+             }
 
-            // If the arm is upright, then we can move the elevator
-            else if (arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
-                elevator.setTargetPosition(scoringPosition.getElevatorPosition());
-            }
+    //         // If the arm is upright, then we can move the elevator
+             else if (arm.at90() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+                 elevator.setTargetPosition(scoringPosition.getElevatorPosition());
+             }
 
-            // Finally, if the elevator is at the right spot, we can score
-            else if (elevator.atPosition(scoringPosition.getElevatorPosition())) {
-                arm.setArmTargetPosition(scoringPosition.getArmAngle());
-            }
-        }
-    }
+    //         // Finally, if the elevator is at the right spot, we can score
+             else if (elevator.atPosition(scoringPosition.getElevatorPosition())) {
+                 arm.setArmTargetPosition(scoringPosition.getArmAngle());
+             }
+         }
+     }
 
     public void setIntake() {
         state = SuperStates.INTAKE_CORAL;

@@ -50,6 +50,7 @@ public final class Constants {
   public static final class IntakeConstants {
     public static final int intakemotorID = 10;
     public static final int intakeLimitSwitchChannel = 5;
+    public static final int flappermotorID = 16;
   }
 
   public static final class ArmConstants {

@@ -49,15 +49,15 @@ public ArmSubsystem() {
     absoluteEncoderConfig.zeroCentered(true);
     absoluteEncoderConfig.zeroOffset(0.66);
 
-    armConfig.idleMode(IdleMode.kCoast); //TURN BACK TO BRAKE
-
+    armConfig.idleMode(IdleMode.kCoast); //TURN BACK TO BRAKE 
+    armConfig.smartCurrentLimit(20);
     armConfig.inverted(true);
 
     armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    armFeedforward = new ArmFeedforward(0.1, 0.14, 0.14);
+    armFeedforward = new ArmFeedforward(0.17, 0.05, 0.13);
     armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-        new TrapezoidProfile.Constraints(60, 150), 0.02);
+        new TrapezoidProfile.Constraints(90, 150), 0.02);
 
     armVoltagePID.setGoal(90);
     armVoltagePID.setTolerance(2.5);
@@ -84,8 +84,14 @@ public double getArmAngle() {
 
 @Override
 public void periodic() {
-    updateArmLoop();
-    SmartDashboard.putNumber("arm pos", getArmAngle());
+    //  updateArmLoop();
+
+
+    SmartDashboard.putNumber("Arm Position", getArmAngle());
+    SmartDashboard.putNumber("Arm Velocity", armAbsoluteEncoder.getVelocity() * 375 / 60);
+    SmartDashboard.putNumber("Desired Arm Position", armVoltagePID.getSetpoint().position);
+    SmartDashboard.putNumber("Desired Arm Velocity", armVoltagePID.getSetpoint().velocity);
+
 }
 
 public void setArmTargetPosition(double position) {
@@ -106,6 +112,10 @@ public void setTo90() {
 
 public boolean at90() {
     return atPosition(90);
+}
+
+public void resetProfilePID() {
+    armVoltagePID.reset(getArmAngle());
 }
 
 public void updateArmLoop() {

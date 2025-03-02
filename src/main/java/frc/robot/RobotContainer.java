@@ -18,6 +18,7 @@ import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
 import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.arm.ArmSubsystem;
+import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.endeffector.EndEffectorSubsystem;
 import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.SuperSystem.ScoringPositions;
@@ -25,6 +26,7 @@ import frc.robot.subsystems.SuperSystem.ScoringPositions;
 import frc.robot.commands.elevator.*;
 import frc.robot.commands.intake.*;
 import frc.robot.commands.arm.*;
+import frc.robot.commands.climber.ClimberCommand;
 import frc.robot.commands.endeffector.*;
 import frc.robot.commands.scoring.ScoringCommand;
 import java.io.File;
@@ -43,41 +45,42 @@ public class RobotContainer {
 
   private final CommandXboxController driverXbox = new CommandXboxController(0);
   private final CommandXboxController secondXbox = new CommandXboxController(1);
- // private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
- //      "swerve"));
+  private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
+       "swerve"));
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final IntakeSubsystem intake = new IntakeSubsystem();
   private final ArmSubsystem arm = new ArmSubsystem();
   private final EndEffectorSubsystem endeffector = new EndEffectorSubsystem();
   private final SuperSystem supersystem = new SuperSystem(arm, elevator);
+  private final ClimberSubsystem climber = new ClimberSubsystem();
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled
    * by angular velocity.
    */
-  //  SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
-      //  () -> driverXbox.getLeftY() * -1,
-      //  () -> driverXbox.getLeftX() * -1)
-      //  .withControllerRotationAxis(driverXbox::getRightX)
-      //  .deadband(OperatorConstants.DEADBAND)
-      //  .scaleTranslation(OperatorConstants.SPEED_MULTIPLIER)
-      //  .scaleRotation(OperatorConstants.ROTATION_MULTIPLIER)
-      //  .allianceRelativeControl(false);
+    SwerveInputStream driveAngularVelocity = SwerveInputStream.of(drivebase.getSwerveDrive(),
+        () -> driverXbox.getLeftY() * -1,
+        () -> driverXbox.getLeftX() * -1)
+        .withControllerRotationAxis(driverXbox::getRightX)
+        .deadband(OperatorConstants.DEADBAND)
+        .scaleTranslation(OperatorConstants.SPEED_MULTIPLIER)
+        .scaleRotation(OperatorConstants.ROTATION_MULTIPLIER)
+        .allianceRelativeControl(false);
 
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative
    * input stream.
    */
-  //  SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
-      //  .withControllerHeadingAxis(() -> -driverXbox.getRightX(),
-      //  () -> -driverXbox.getRightY())
-      //  .headingWhile(true);
+    SwerveInputStream driveDirectAngle = driveAngularVelocity.copy()
+        .withControllerHeadingAxis(() -> -driverXbox.getRightX(),
+        () -> -driverXbox.getRightY())
+        .headingWhile(true);
 
   // Drive with right-stick direct angle control
  // Command driveFieldOrientedDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
 
   // Drive with right-stick angular velocity control
- // Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
+  Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
 
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
   private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
@@ -87,18 +90,24 @@ public class RobotContainer {
    
   private final ElevatorCommand elevatorbottomPosition = new ElevatorCommand(elevator, 1.0);
 
+  private final SSElevatorCommand elevatorL4Command = new SSElevatorCommand(supersystem, ScoringPositions.L4);
   private final SSElevatorCommand elevatorL3Command = new SSElevatorCommand(supersystem, ScoringPositions.L3);
   private final SSElevatorCommand elevatorL2Command = new SSElevatorCommand(supersystem, ScoringPositions.L2);
+  private final SSElevatorCommand elevatorL1Command = new SSElevatorCommand(supersystem, ScoringPositions.L1);
 
-  private final IntakeCommand runIntake = new IntakeCommand(intake, 0.8);
+  private final IntakeCommand runIntake = new IntakeCommand(intake, 0.3);
+  private final IntakeCommand runOutake = new IntakeCommand(intake, -0.4);
 
   private final ArmCommand runArm90 = new ArmCommand(arm, 90);
   private final ArmCommand runArm60 = new ArmCommand(arm, 40.52);
 
-  private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.6);
-  private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.6);
+  private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.4);
+  private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.1);
 
   private final ScoringCommand score = new ScoringCommand(supersystem, arm, elevator);
+
+  private final ClimberCommand climbout = new ClimberCommand(climber, 0.5);
+  private final ClimberCommand climbin = new ClimberCommand(climber, -0.5);
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -120,24 +129,36 @@ public class RobotContainer {
    * Flight joysticks}.
    */
   private void configureBindings() {
-   // drivebase.setDefaultCommand(driveFieldOrientedDirectAngle);
-    // driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
+    drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
+     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
     driverXbox.leftBumper().whileTrue(runIntake);
-    
+    driverXbox.leftTrigger().whileTrue(runOutake);
+
+    driverXbox.rightTrigger().whileTrue(outtakeEffector);
+    driverXbox.rightBumper().whileTrue(runEffector);
+
     driverXbox.b().whileTrue(runArm60);
     driverXbox.x().whileTrue(runArm90);
     
     driverXbox.a().whileTrue(elevatorbottomPosition);
     driverXbox.y().whileTrue(elevatorL3Position);
 
-    driverXbox.rightBumper().whileTrue(runEffector);
-    driverXbox.rightTrigger().whileTrue(outtakeEffector);
+    secondXbox.povUp().onTrue(Commands.runOnce(() -> elevator.incrementGoal())).debounce(0.1);
+    secondXbox.povDown().onTrue(Commands.runOnce(() -> elevator.decrementGoal())).debounce(0.1);
+    
+    
 
-    driverXbox.leftTrigger().whileTrue(score);
+    secondXbox.leftBumper().whileTrue(score);
 
 
-    secondXbox.a().whileTrue(elevatorL3Command);
+    secondXbox.x().whileTrue(elevatorL4Command);
+    secondXbox.y().whileTrue(elevatorL3Command);
     secondXbox.b().whileTrue(elevatorL2Command);
+    secondXbox.a().whileTrue(elevatorL1Command);
+
+    secondXbox.rightBumper().whileTrue(climbout);
+    secondXbox.rightTrigger().whileTrue(climbin);
+
    
  }
   
@@ -157,7 +178,16 @@ public class RobotContainer {
     configureBindings();
   }
 
-//   public void setMotorBrake(boolean brake) {
-//     drivebase.setMotorBrake(brake);
- //  }
+  public void resetProfilePIDs() {
+    elevator.resetProfilePID();
+    arm.resetProfilePID();
+  }
+
+  public void setFlapperBrake(boolean brake) {
+    intake.setFlapperBrake(brake);
+  }
+
+   public void setMotorBrake(boolean brake) {
+     drivebase.setMotorBrake(brake);
+   }
 }
