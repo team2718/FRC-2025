@@ -19,12 +19,9 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
-import java.awt.Desktop;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
-
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -36,7 +33,6 @@ import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import swervelib.SwerveDrive;
-import swervelib.telemetry.SwerveDriveTelemetry;
 
 /**
  * Example PhotonVision class to aid in the pursuit of accurate odometry. Taken
@@ -54,10 +50,6 @@ public class Vision {
    */
   public VisionSystemSim visionSim;
   /**
-   * Current pose from the pose estimator using wheel odometry.
-   */
-  private Supplier<Pose2d> currentPose;
-  /**
    * Field from {@link swervelib.SwerveDrive#field}
    */
   private Field2d field2d;
@@ -71,8 +63,7 @@ public class Vision {
    *                    {@link SwerveDrive#getPose()}
    * @param field       Current field, should be {@link SwerveDrive#field}
    */
-  public Vision(Supplier<Pose2d> currentPose, Field2d field) {
-    this.currentPose = currentPose;
+  public Vision(Field2d field) {
     this.field2d = field;
 
     // if (Robot.isSimulation()) {
@@ -236,23 +227,6 @@ public class Vision {
     return visionSim;
   }
 
-  /**
-   * Open up the photon vision camera streams on the localhost, assumes running
-   * photon vision on localhost.
-   */
-  private void openSimCameraViews() {
-    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-      // try
-      // {
-      // Desktop.getDesktop().browse(new URI("http://localhost:1182/"));
-      // Desktop.getDesktop().browse(new URI("http://localhost:1184/"));
-      // Desktop.getDesktop().browse(new URI("http://localhost:1186/"));
-      // } catch (IOException | URISyntaxException e)
-      // {
-      // e.printStackTrace();
-      // }
-    }
-  }
 
   /**
    * Update the {@link Field2d} to include tracked targets/

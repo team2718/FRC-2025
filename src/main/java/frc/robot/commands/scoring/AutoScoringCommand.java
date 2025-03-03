@@ -5,12 +5,10 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.commands.endeffector.EndEffectorCommand;
 import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.arm.ArmSubsystem;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
 import frc.robot.subsystems.endeffector.EndEffectorSubsystem;
-import frc.robot.subsystems.intake.IntakeSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.vision.Vision;
 
@@ -18,7 +16,6 @@ public class AutoScoringCommand extends Command {
     private final SuperSystem supersystem;
     private final SwerveSubsystem swerve;
     private final ArmSubsystem arm;
-    private final ElevatorSubsystem elevator;
     private final EndEffectorSubsystem effector;
     private final Vision vision;
 
@@ -31,7 +28,6 @@ public class AutoScoringCommand extends Command {
     public AutoScoringCommand(SuperSystem supersystem, SwerveSubsystem swerve, ArmSubsystem arm, ElevatorSubsystem elevator, EndEffectorSubsystem effector, Vision vision) {
         this.supersystem = supersystem;
         this.arm = arm;
-        this.elevator = elevator;
         this.vision = vision;
         this.swerve = swerve;
         this.effector = effector;

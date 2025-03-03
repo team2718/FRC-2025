@@ -5,16 +5,12 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-//subsystems
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
@@ -24,10 +20,7 @@ import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.endeffector.EndEffectorSubsystem;
 import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.SuperSystem.ScoringPositions;
-//commands
-import frc.robot.commands.elevator.*;
 import frc.robot.commands.intake.*;
-import frc.robot.commands.arm.*;
 import frc.robot.commands.climber.ClimberCommand;
 import frc.robot.commands.endeffector.*;
 import frc.robot.commands.scoring.AutoScoringCommand;
@@ -52,7 +45,7 @@ public class RobotContainer {
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
        "swerve"));
 
-  private final Vision vision = new Vision(drivebase::getPose, drivebase.getSwerveDrive().field);
+  private final Vision vision = new Vision(drivebase.getSwerveDrive().field);
     
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final IntakeSubsystem intake = new IntakeSubsystem();
@@ -90,13 +83,6 @@ public class RobotContainer {
   Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
 
   private SendableChooser<String> autoChooser = new SendableChooser<String>();
-  private ShuffleboardTab tab = Shuffleboard.getTab("auto chooser");
-
-  private final IntakeCommand runIntake = new IntakeCommand(intake, 0.45);
-  private final IntakeCommand runOutake = new IntakeCommand(intake, -0.5);
-
-  private final EndEffectorCommand runEffector = new EndEffectorCommand(endeffector, 0.9);
-  private final EndEffectorCommand outtakeEffector = new EndEffectorCommand(endeffector, -0.2);
 
   private final ScoringCommand score = new ScoringCommand(supersystem, arm, elevator);
   private final AutoScoringCommand autoScore = new AutoScoringCommand(supersystem, drivebase, arm, elevator, endeffector, vision);
@@ -104,30 +90,22 @@ public class RobotContainer {
   private final ClimberCommand climbout = new ClimberCommand(climber, 0.5);
   private final ClimberCommand climbin = new ClimberCommand(climber, -0.5);
 
-  private int position = 3;
+  private int position = 4;
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
 
   public RobotContainer() {
+    supersystem.setScoringPosition(ScoringPositions.L4);
+
+    autoChooser.setDefaultOption("Move 1m", "Move 1m");
+
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+
     configureBindings();
-    supersystem.setScoringPosition(ScoringPositions.L3);
   }
 
-  /**
-   * Use this method to define your trigger->command mappings. Triggers can be
-   * created via the
-   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
-   * an arbitrary predicate, or via the
-   * named factories in
-   * {@link edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses
-   * for
-   * {@link CommandXboxController
-   * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller PS4}
-   * controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick
-   * Flight joysticks}.
-   */
   private void configureBindings() {
 
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
@@ -139,11 +117,14 @@ public class RobotContainer {
     driverXbox.rightTrigger().whileTrue(score);
     driverXbox.rightBumper().whileTrue(autoScore);
 
+    driverXbox.start().whileTrue(climbin);
+    driverXbox.back().whileTrue(climbout);
+
     driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.4);
     driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.4);
 
-    driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(false))).debounce(0.4);
-    driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft(true))).debounce(0.4);
+    driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
+    driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
     elevator.resetPosition();
  }
@@ -176,15 +157,8 @@ public class RobotContainer {
     arm.resetProfilePID();
   }
 
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
   public Command getAutonomousCommand() {
-    // An example command will be run in autonomous
-  //  return drivebase.getAutonomousCommand("Move 1m");
-   return null;
+    return drivebase.getAutonomousCommand(autoChooser.getSelected());
   }
 
   public void updateOdometry() {
@@ -199,8 +173,4 @@ public class RobotContainer {
     elevator.resetProfilePID();
     arm.resetProfilePID();
   }
-
-   public void setMotorBrake(boolean brake) {
-     drivebase.setMotorBrake(brake);
-   }
 }
