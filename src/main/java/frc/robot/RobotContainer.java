@@ -27,6 +27,8 @@ import frc.robot.commands.scoring.AutoScoringCommand;
 import frc.robot.commands.scoring.ScoringCommand;
 import java.io.File;
 
+import com.pathplanner.lib.auto.NamedCommands;
+
 import swervelib.SwerveInputStream;
 
 /**
@@ -95,11 +97,33 @@ public class RobotContainer {
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
-
   public RobotContainer() {
     supersystem.setScoringPosition(ScoringPositions.L4);
 
-    autoChooser.setDefaultOption("Move 1m", "Move 1m");
+    NamedCommands.registerCommand("AutoScore", new AutoScoringCommand(supersystem, drivebase, arm, elevator, endeffector, vision).auto());
+
+    ScoringPositions[] positions = {ScoringPositions.L1, ScoringPositions.L2, ScoringPositions.L3, ScoringPositions.L4};
+    String[] leftright = {"Left", "Right"};
+
+    // Register commands for setting scoring position and side in PathPlanner
+    // Commands will look like "L1-Left", "L1-Right", "L2-Left", "L2-Right", etc.
+    for (ScoringPositions pos : positions) {
+      for (String lr : leftright) {
+        NamedCommands.registerCommand(pos.name() + "-" + lr, Commands.runOnce(() -> {
+          supersystem.setScoringPosition(pos);
+          if (lr.equals("Left")) {
+            supersystem.setScoringLeft();
+          } else {
+            supersystem.setScoringRight();
+          }
+        }));
+      }
+    }
+
+    autoChooser.setDefaultOption("Leave", "Leave");
+    autoChooser.addOption("Preload Proc", "Preload Proc");
+    autoChooser.addOption("Preload Middle", "Preload Middle");
+    autoChooser.addOption("Preload NonProc", "Preload NonProc");
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
 

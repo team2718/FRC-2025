@@ -24,6 +24,11 @@ public class AutoScoringCommand extends Command {
     private final PIDController thetaPID = new PIDController(0.15, 0.001, 0.0);
 
     private boolean complete = false;
+    private boolean autonomousFinished = false;
+
+    private double xDistance = 0.0;
+    private double yDistance = 0.0;
+    private double thetaDistance = 0.0;
 
     public AutoScoringCommand(SuperSystem supersystem, SwerveSubsystem swerve, ArmSubsystem arm, ElevatorSubsystem elevator, EndEffectorSubsystem effector, Vision vision) {
         this.supersystem = supersystem;
@@ -39,11 +44,21 @@ public class AutoScoringCommand extends Command {
         addRequirements(supersystem, swerve, arm, elevator);
     }
 
+    public AutoScoringCommand auto() {
+        autonomousFinished = true;
+        return this;
+    }
+
     @Override
     public void initialize() {
+        xDistance = 0.0;
+        yDistance = 0.0;
+        thetaDistance = 0.0;
+
         xPID.reset();
         yPID.reset();
         thetaPID.reset();
+
         complete = false;
     }
 
@@ -57,9 +72,14 @@ public class AutoScoringCommand extends Command {
             ySetpoint += Constants.AutoAlignConstants.distanceBetweenBranches; // Distance between branches
         }
 
-        double x = MathUtil.clamp(xPID.calculate(vision.getVisionY(), ySetpoint), -0.5, 0.5);
-        double y = -MathUtil.clamp(yPID.calculate(vision.getVisionX(), Constants.AutoAlignConstants.reefWallToCamera), -0.5, 0.5);
-        double theta = MathUtil.clamp(thetaPID.calculate(vision.getVisionTheta(), 0.0), -0.4, 0.4);
+        // Note: X and Y are swapped because the camera is mounted perpendicular to the robot's forward direction
+        xDistance = vision.getVisionY();
+        yDistance = -vision.getVisionX();
+        thetaDistance = vision.getVisionTheta();
+
+        double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -0.5, 0.5);
+        double y = -MathUtil.clamp(yPID.calculate(yDistance, Constants.AutoAlignConstants.reefWallToCamera), -0.5, 0.5);
+        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -0.4, 0.4);
 
         if (complete || (xPID.atSetpoint() && yPID.atSetpoint() && thetaPID.atSetpoint())) {
             supersystem.setScoring();
@@ -86,7 +106,11 @@ public class AutoScoringCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        return false;
+        if (autonomousFinished) {
+            return (complete && yDistance > 1.5); // Complete the routine once the robot has scored and moved away
+        } else {
+            return false;
+        }
     }
 
 }
