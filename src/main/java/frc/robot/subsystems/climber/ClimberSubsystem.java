@@ -14,16 +14,18 @@ public class ClimberSubsystem extends SubsystemBase {
     private final SparkMax climberMotor;
     SparkMaxConfig climberConfig;
 
-public ClimberSubsystem() {
-    climberMotor = new SparkMax(Constants.ClimberConstants.climbermotorID, MotorType.kBrushless);
-    SparkMaxConfig climberConfig = new SparkMaxConfig();
-    climberConfig.idleMode(IdleMode.kBrake);
-    climberConfig.inverted(false);
-    climberConfig.smartCurrentLimit(20);
-    climberMotor.configure(climberConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-}
+    public ClimberSubsystem() {
+        climberMotor = new SparkMax(Constants.ClimberConstants.climbermotorID, MotorType.kBrushless);
 
-public void setClimber(double speed) {
-    climberMotor.set(speed);
-}
+        climberConfig = new SparkMaxConfig();
+        climberConfig.idleMode(IdleMode.kBrake);
+        climberConfig.inverted(false);
+        climberConfig.smartCurrentLimit(20);
+
+        climberMotor.configure(climberConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    }
+
+    public void setClimber(double speed) {
+        climberMotor.set(speed);
+    }
 }

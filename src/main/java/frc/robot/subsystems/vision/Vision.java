@@ -1,15 +1,9 @@
 package frc.robot.subsystems.vision;
 
-import static edu.wpi.first.units.Units.Microseconds;
-import static edu.wpi.first.units.Units.Milliseconds;
-import static edu.wpi.first.units.Units.Seconds;
-
-import edu.wpi.first.apriltag.AprilTagDetector;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -20,18 +14,14 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTablesJNI;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
-import java.awt.Desktop;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -43,52 +33,28 @@ import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import swervelib.SwerveDrive;
-import swervelib.telemetry.SwerveDriveTelemetry;
 
 /**
  * Example PhotonVision class to aid in the pursuit of accurate odometry. Taken
  * from
  * https://gitlab.com/ironclad_code/ironclad-2024/-/blob/master/src/main/java/frc/robot/vision/Vision.java?ref_type=heads
  */
-public class Vision extends SubsystemBase{
+public class Vision {
 
   /**
    * April Tag Field Layout of the year.
    */
-  public static final AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(
-      AprilTagFields.k2025ReefscapeWelded);
-  /**
-   * Ambiguity defined as a value between (0,1). Used in
-   * {@link Vision#filterPose}.
-   */
-  private final double maximumAmbiguity = 0.25;
+  public static final AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
   /**
    * Photon Vision Simulation
    */
   public VisionSystemSim visionSim;
   /**
-   * Count of times that the odom thinks we're more than 10meters away from the
-   * april tag.
-   */
-  private double longDistangePoseEstimationCount = 0;
-  /**
-   * Current pose from the pose estimator using wheel odometry.
-   */
-  private Supplier<Pose2d> currentPose;
-  /**
    * Field from {@link swervelib.SwerveDrive#field}
    */
   private Field2d field2d;
 
-  PhotonCamera camera = new PhotonCamera("Arducam_OV9281_USB_Camera");
-
-  Transform3d robotToCam = new Transform3d(new Translation3d(0.5, 0.0, 0.5), new Rotation3d(0, 0, 0));
-  PhotonPoseEstimator photonPoseEstimator = new PhotonPoseEstimator(fieldLayout,
-      PoseStrategy.AVERAGE_BEST_TARGETS, robotToCam);
-  PIDController turnPID = new PIDController(0.001, 0.00001, 0);
-
-  boolean hasTarget; // Stores whether or not a target is detected
-  PhotonPipelineResult result; // Stores all the data that Photonvision returns
+  private static final double TARGET_HEIGHT_METERS = Units.inchesToMeters(57.13); // Speaker AprilTag Height
 
   /**
    * Constructor for the Vision class.
@@ -97,133 +63,20 @@ public class Vision extends SubsystemBase{
    *                    {@link SwerveDrive#getPose()}
    * @param field       Current field, should be {@link SwerveDrive#field}
    */
-  public Vision(Supplier<Pose2d> currentPose, Field2d field) {
-    this.currentPose = currentPose;
+  public Vision(Field2d field) {
     this.field2d = field;
-    var aprilTagDetector = new AprilTagDetector();
-    var config = aprilTagDetector.getConfig();
-    AprilTagDetector detector = new AprilTagDetector();
-    detector.addFamily("tag36h11");
 
-    if (Robot.isSimulation()) {
-      visionSim = new VisionSystemSim("Vision");
-      visionSim.addAprilTags(fieldLayout);
+    // if (Robot.isSimulation()) {
+    //   visionSim = new VisionSystemSim("Vision");
+    //   visionSim.addAprilTags(fieldLayout);
 
-      for (Cameras c : Cameras.values()) {
-        c.addToVisionSim(visionSim);
-      }
+    //   for (Cameras c : Cameras.values()) {
+    //     c.addToVisionSim(visionSim);
+    //   }
 
-      openSimCameraViews();
-    }
+    //   openSimCameraViews();
+    // }
   }
-
-  public void updateVisionData() {
-    if (camera != null) {
-      var result = camera.getLatestResult();
-
-      if (result.hasTargets()) {
-      }
-      // Get the fiducial ID and yaw
-
-      double fiducialId = result.getBestTarget().getFiducialId();
-      double yaw = result.getBestTarget().getYaw();
-
-      // Print the information to the terminal
-      System.out.println("Fiducial ID: " + fiducialId);
-      System.out.println("Yaw: " + yaw);
-
-      // You can also use SmartDashboard to display the information on the
-      // Shuffleboard
-      SmartDashboard.putNumber("Fiducial ID", fiducialId);
-      SmartDashboard.putNumber("Yaw", yaw);
-
-    }
-  }
-
-  public boolean canSeeTargetID(int targetID) {
-    var result = camera.getLatestResult();
-
-    if (result.hasTargets()) {
-      for (var target : result.getTargets()) {
-        int fiducialId = target.getFiducialId();
-        if (fiducialId == targetID) {
-          return true;
-        }
-      }
-      return false;
-    }
-    return false;
-  }
-
-  public double getYaw(int targetID) {
-    var result = camera.getLatestResult();
-    if (result == null) {
-      return 0;
-    }
-
-    if (result.hasTargets()) {
-      for (var target : result.getTargets()) {
-        int fiducialId = target.getFiducialId();
-        if (fiducialId == targetID)
-          return target.getYaw();
-        {
-        }
-
-      }
-    }
-    return 0.0;
-  }
-
-  public PhotonTrackedTarget getTargetWithID(int id) { // Returns the apriltag target with the specified ID (if it
-    // exists)
-var result = camera.getLatestResult();
-
-if (result == null) {
-return null;
-}
-List<PhotonTrackedTarget> targets = result.getTargets(); // Create a list of all currently tracked targets
-for (PhotonTrackedTarget i : targets) {
-if (i.getFiducialId() == id) { // Check the ID of each target in the list
-return i; // Found the target with the specified ID!
-}
-}
-return null; // Failed to find the target with the specified ID
-}
-
-public PhotonTrackedTarget getBestTarget() {
-  if (hasTarget) {
-    return result.getBestTarget(); // Returns the best (closest) target
-  } else {
-    return null; // Otherwise, returns null if no targets are currently found
-  }
-}
-
-public boolean getHasTarget() {
-  return hasTarget; // Returns whether or not a target was found
-}
-
-public double distanceToTarget(PhotonTrackedTarget target, double tagHeight, double cameraHeight, double cameraAngle) {
-
-  if (target == null) {
-    return 100;
-  }
-
-// convert angle to radians
-final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(25);
-final double TARGET_HEIGHT_METERS = Units.inchesToMeters(57.13);
-// Angle between horizontal and the camera.
-final double CAMERA_PITCH_RADIANS = Units.degreesToRadians(30);
-
-// First calculate range
-double range = PhotonUtils.calculateDistanceToTargetMeters(
-    CAMERA_HEIGHT_METERS,
-    TARGET_HEIGHT_METERS,
-    CAMERA_PITCH_RADIANS,
-    Units.degreesToRadians(target.getPitch()));
-
-return range;
-}
-
 
   /**
    * Calculates a target pose relative to an AprilTag on the field.
@@ -251,26 +104,29 @@ return range;
    * @param swerveDrive {@link SwerveDrive} instance.
    */
   public void updatePoseEstimation(SwerveDrive swerveDrive) {
-    if (SwerveDriveTelemetry.isSimulation && swerveDrive.getSimulationDriveTrainPose().isPresent()) {
-      /*
-       * In the maple-sim, odometry is simulated using encoder values, accounting for
-       * factors like skidding and drifting.
-       * As a result, the odometry may not always be 100% accurate.
-       * However, the vision system should be able to provide a reasonably accurate
-       * pose estimation, even when odometry is incorrect.
-       * (This is why teams implement vision system to correct odometry.)
-       * Therefore, we must ensure that the actual robot pose is provided in the
-       * simulator when updating the vision simulation during the simulation.
-       */
-      visionSim.update(swerveDrive.getSimulationDriveTrainPose().get());
-    }
+    // if (SwerveDriveTelemetry.isSimulation && swerveDrive.getSimulationDriveTrainPose().isPresent()) {
+    //   /*
+    //    * In the maple-sim, odometry is simulated using encoder values, accounting for
+    //    * factors like skidding and drifting.
+    //    * As a result, the odometry may not always be 100% accurate.
+    //    * However, the vision system should be able to provide a reasonably accurate
+    //    * pose estimation, even when odometry is incorrect.
+    //    * (This is why teams implement vision system to correct odometry.)
+    //    * Therefore, we must ensure that the actual robot pose is provided in the
+    //    * simulator when updating the vision simulation during the simulation.
+    //    */
+    //   visionSim.update(swerveDrive.getSimulationDriveTrainPose().get());
+    // }
     for (Cameras camera : Cameras.values()) {
       Optional<EstimatedRobotPose> poseEst = getEstimatedGlobalPose(camera);
       if (poseEst.isPresent()) {
+        SmartDashboard.putBoolean("Vision Can See Target", true);
         var pose = poseEst.get();
         swerveDrive.addVisionMeasurement(pose.estimatedPose.toPose2d(),
             pose.timestampSeconds,
             camera.curStdDevs);
+      } else {
+        SmartDashboard.putBoolean("Vision Can See Target", false);
       }
     }
 
@@ -288,69 +144,56 @@ return range;
    */
   public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Cameras camera) {
     Optional<EstimatedRobotPose> poseEst = camera.getEstimatedGlobalPose();
-    if (Robot.isSimulation()) {
-      Field2d debugField = visionSim.getDebugField();
-      // Uncomment to enable outputting of vision targets in sim.
-      poseEst.ifPresentOrElse(
-          est -> debugField
-              .getObject("VisionEstimation")
-              .setPose(est.estimatedPose.toPose2d()),
-          () -> {
-            debugField.getObject("VisionEstimation").setPoses();
-          });
-    }
+    // if (Robot.isSimulation()) {
+    //   Field2d debugField = visionSim.getDebugField();
+    //   // Uncomment to enable outputting of vision targets in sim.
+    //   poseEst.ifPresentOrElse(
+    //       est -> debugField
+    //           .getObject("VisionEstimation")
+    //           .setPose(est.estimatedPose.toPose2d()),
+    //       () -> {
+    //         debugField.getObject("VisionEstimation").setPoses();
+    //       });
+    // }
     return poseEst;
   }
 
-  /**
-   * Filter pose via the ambiguity and find best estimate between all of the
-   * camera's throwing out distances more than
-   * 10m for a short amount of time.
-   *
-   * @param pose Estimated robot pose.
-   * @return Could be empty if there isn't a good reading.
-   */
-  @Deprecated(since = "2024", forRemoval = true)
-  private Optional<EstimatedRobotPose> filterPose(Optional<EstimatedRobotPose> pose) {
-    if (pose.isPresent()) {
-      double bestTargetAmbiguity = 1; // 1 is max ambiguity
-      for (PhotonTrackedTarget target : pose.get().targetsUsed) {
-        double ambiguity = target.getPoseAmbiguity();
-        if (ambiguity != -1 && ambiguity < bestTargetAmbiguity) {
-          bestTargetAmbiguity = ambiguity;
-        }
-      }
-      // ambiguity to high dont use estimate
-      if (bestTargetAmbiguity > maximumAmbiguity) {
-        return Optional.empty();
-      }
+  public double getVisionX() {
+    Optional<PhotonTrackedTarget> bestResult = Cameras.SCORING_CAM.lastBestResult;
 
-      // est pose is very far from recorded robot pose
-      if (PhotonUtils.getDistanceToPose(currentPose.get(), pose.get().estimatedPose.toPose2d()) > 1) {
-        longDistangePoseEstimationCount++;
-
-        // if it calculates that were 10 meter away for more than 10 times in a row its
-        // probably right
-        if (longDistangePoseEstimationCount < 10) {
-          return Optional.empty();
-        }
-      } else {
-        longDistangePoseEstimationCount = 0;
-      }
-      return pose;
+    if (!bestResult.isPresent()) {
+      return 0.01;
     }
-    return Optional.empty();
+
+    return bestResult.get().getBestCameraToTarget().getX();
   }
 
-  /**
-   * Get distance of the robot from the AprilTag pose.
-   *
-   * @param id AprilTag ID
-   * @return Distance
-   */
-  public double getDistanceFromAprilTag(int id) {
-    Optional<Pose3d> tag = fieldLayout.getTagPose(id);
-    return tag.map(pose3d -> PhotonUtils.getDistanceToPose(currentPose.get(), pose3d.toPose2d())).orElse(-1.0);
+  public double getVisionY() {
+    Optional<PhotonTrackedTarget> bestResult = Cameras.SCORING_CAM.lastBestResult;
+
+    if (!bestResult.isPresent()) {
+      return 0.01;
+    }
+
+    return bestResult.get().getBestCameraToTarget().getY();
+  }
+
+  public double getVisionTheta() {
+    Optional<PhotonTrackedTarget> bestResult = Cameras.SCORING_CAM.lastBestResult;
+
+    if (!bestResult.isPresent()) {
+      return 0.01;
+    }
+
+    double radians = bestResult.get().getBestCameraToTarget().getRotation().getZ();
+    radians += Math.PI;
+    
+    if (radians > Math.PI) {
+      radians -= 2 * Math.PI;
+    }
+
+    // Return in degrees
+    return -Math.toDegrees(radians);
   }
 
   /**
@@ -384,23 +227,6 @@ return range;
     return visionSim;
   }
 
-  /**
-   * Open up the photon vision camera streams on the localhost, assumes running
-   * photon vision on localhost.
-   */
-  private void openSimCameraViews() {
-    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-      // try
-      // {
-      // Desktop.getDesktop().browse(new URI("http://localhost:1182/"));
-      // Desktop.getDesktop().browse(new URI("http://localhost:1184/"));
-      // Desktop.getDesktop().browse(new URI("http://localhost:1186/"));
-      // } catch (IOException | URISyntaxException e)
-      // {
-      // e.printStackTrace();
-      // }
-    }
-  }
 
   /**
    * Update the {@link Field2d} to include tracked targets/
@@ -431,34 +257,18 @@ return range;
   /**
    * Camera Enum to select each camera
    */
-  public enum Cameras {
-    /**
-     * Left Camera
-     */
-    LEFT_CAM("left",
-        new Rotation3d(0, Math.toRadians(-24.094), Math.toRadians(30)),
-        new Translation3d(Units.inchesToMeters(12.056),
-            Units.inchesToMeters(10.981),
-            Units.inchesToMeters(8.44)),
-        VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1)),
-    /**
-     * Right Camera
-     */
-    RIGHT_CAM("right",
-        new Rotation3d(0, Math.toRadians(-24.094), Math.toRadians(-30)),
-        new Translation3d(Units.inchesToMeters(12.056),
-            Units.inchesToMeters(-10.981),
-            Units.inchesToMeters(8.44)),
-        VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1)),
+  enum Cameras {
     /**
      * Center Camera
      */
-    CENTER_CAM("center",
-        new Rotation3d(0, Units.degreesToRadians(18), 0),
-        new Translation3d(Units.inchesToMeters(-4.628),
-            Units.inchesToMeters(-10.687),
-            Units.inchesToMeters(16.129)),
-        VecBuilder.fill(4, 4, 8), VecBuilder.fill(0.5, 0.5, 1));
+    SCORING_CAM("scoring",
+        new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(28), Units.degreesToRadians(90)),
+        new Translation3d(Units.inchesToMeters(12.9),
+            Units.inchesToMeters(7),
+            Units.inchesToMeters(29.5)),
+        VecBuilder.fill(1, 1, 4), VecBuilder.fill(0.5, 0.5, 1));
+
+    Alert connectedAlert;
 
     /**
      * Latency alert to use when high latency is detected.
@@ -492,7 +302,8 @@ return range;
     /**
      * Estimated robot pose.
      */
-    public Optional<EstimatedRobotPose> estimatedRobotPose;
+    public Optional<EstimatedRobotPose> estimatedRobotPose = Optional.empty();
+    public Optional<PhotonTrackedTarget> lastBestResult = Optional.empty();
     /**
      * Simulated camera instance which only exists during simulations.
      */
@@ -502,11 +313,6 @@ return range;
      * queries.
      */
     public List<PhotonPipelineResult> resultsList = new ArrayList<>();
-    /**
-     * Last read from the camera timestamp to prevent lag due to slow data fetches.
-     */
-    private double lastReadTimestamp = Microseconds.of(NetworkTablesJNI.now()).in(Seconds);
-
     /**
      * Construct a Photon Camera class with help. Standard deviations are fake
      * values, experiment and determine
@@ -527,6 +333,8 @@ return range;
       latencyAlert = new Alert("'" + name + "' Camera is experiencing high latency.", AlertType.kWarning);
 
       camera = new PhotonCamera(name);
+
+      connectedAlert = new Alert("Camera \"" + name + "\" is not connected!", AlertType.kError);
 
       // https://docs.wpilib.org/en/stable/docs/software/basic-programming/coordinate-system.html
       robotToCamTransform = new Transform3d(robotToCamTranslation, robotToCamRotation);
@@ -605,6 +413,34 @@ return range;
       return resultsList.isEmpty() ? Optional.empty() : Optional.of(resultsList.get(0));
     }
 
+    public PhotonTrackedTarget getTargetWithID(int fiducialId) {
+      if (resultsList.isEmpty()) {
+        return null;
+      }
+  
+      for (PhotonTrackedTarget target : resultsList.get(0).getTargets()) {
+        if (target.getFiducialId() == fiducialId) {
+          return target;
+        }
+      }
+  
+      return null;
+    }
+  
+    public double distanceToTarget(PhotonTrackedTarget target, double tagHeight, double cameraHeight,
+        double cameraAngle) {
+  
+      if (target == null) {
+        return 1000; // Set very high so LUT commands the pivot down
+      }
+  
+      return PhotonUtils.calculateDistanceToTargetMeters(
+          robotToCamTransform.getZ(),
+          TARGET_HEIGHT_METERS,
+          robotToCamTransform.getRotation().getY(),
+          Units.degreesToRadians(target.getPitch()));
+    }
+
     /**
      * Get the estimated robot pose. Updates the current robot pose estimation,
      * standard deviations, and flushes the
@@ -613,7 +449,13 @@ return range;
      * @return Estimated pose.
      */
     public Optional<EstimatedRobotPose> getEstimatedGlobalPose() {
-      updateUnreadResults();
+      if (camera.isConnected()) {
+        updateUnreadResults();
+        connectedAlert.set(false);
+      } else {
+        connectedAlert.set(true);
+      }
+
       return estimatedRobotPose;
     }
 
@@ -622,23 +464,18 @@ return range;
      * Sorts the list by timestamp.
      */
     private void updateUnreadResults() {
-      double mostRecentTimestamp = resultsList.isEmpty() ? 0.0 : resultsList.get(0).getTimestampSeconds();
-      double currentTimestamp = Microseconds.of(NetworkTablesJNI.now()).in(Seconds);
-      double debounceTime = Milliseconds.of(15).in(Seconds);
-      for (PhotonPipelineResult result : resultsList) {
-        mostRecentTimestamp = Math.max(mostRecentTimestamp, result.getTimestampSeconds());
-      }
-      if ((resultsList.isEmpty() || (currentTimestamp - mostRecentTimestamp >= debounceTime)) &&
-          (currentTimestamp - lastReadTimestamp) >= debounceTime) {
-        resultsList = Robot.isReal() ? camera.getAllUnreadResults() : cameraSim.getCamera().getAllUnreadResults();
-        lastReadTimestamp = currentTimestamp;
-        resultsList.sort((PhotonPipelineResult a, PhotonPipelineResult b) -> {
-          return a.getTimestampSeconds() >= b.getTimestampSeconds() ? 1 : -1;
-        });
+      if (resultsList.isEmpty()) {
+        resultsList = camera.getAllUnreadResults();
+
         if (!resultsList.isEmpty()) {
-          updateEstimatedGlobalPose();
+          PhotonTrackedTarget wowwee = resultsList.get(0).getBestTarget();
+          if (wowwee != null) {
+            lastBestResult = Optional.of(wowwee);
+          }
         }
       }
+
+      updateEstimatedGlobalPose();
     }
 
     /**
@@ -661,6 +498,7 @@ return range;
         visionEst = poseEstimator.update(change);
         updateEstimationStdDevs(visionEst, change.getTargets());
       }
+      resultsList.clear();
       estimatedRobotPose = visionEst;
     }
 
@@ -720,6 +558,10 @@ return range;
       }
     }
 
+  }
+
+  public double getNumTargets() {
+    return Cameras.SCORING_CAM.resultsList.size();
   }
 
 }

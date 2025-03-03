@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import com.revrobotics.spark.config.SparkBaseConfig;
-
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
@@ -24,7 +22,8 @@ import swervelib.math.Matter;
  */
 public final class Constants {
 
-  // Competition mode will remove or reduce feedback to minmize unnecessary computation
+  // Competition mode will remove or reduce feedback to minmize unnecessary
+  // computation
   public static final boolean COMPETITION_MODE = false;
 
   // Robot constants
@@ -43,7 +42,7 @@ public final class Constants {
   public static class OperatorConstants {
 
     public static final double SPEED_MULTIPLIER = 0.6;
-    public static final double ROTATION_MULTIPLIER = 1.0;
+    public static final double ROTATION_MULTIPLIER = 0.6;
     public static final double DEADBAND = 0.3;
   }
 
@@ -56,18 +55,25 @@ public final class Constants {
   public static final class ArmConstants {
     public static final int armMotorID = 13;
   }
-  
+
   public static final class EndEffectorConstants {
     public static final int endeffectormotor1ID = 14;
   }
+
   public static final class ElevatorConstants {
     public static final int elevatormotor1ID = 11;
     public static final int elevatormotor2ID = 12;
-    public static final double elevatorTolerance = 0.5;
+    public static final double elevatorTolerance = 1;
 
   }
 
   public static final class ClimberConstants {
     public static final int climbermotorID = 15;
+  }
+
+  public static final class AutoAlignConstants {
+    public static final double leftBranchToCamera = -0.05; // meters
+    public static final double distanceBetweenBranches = Units.inchesToMeters(12.94);
+    public static final double reefWallToCamera = 0.84; // meters
   }
 }

@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Move 1m Path"
+            "pathName": "Leave Path"
           }
         }
       ]
     }
   },
-  "resetOdom": true,
+  "resetOdom": false,
   "folder": null,
   "choreoAuto": false
 }

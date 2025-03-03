@@ -1,38 +1,22 @@
 package frc.robot.subsystems.arm;
 
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkFlex;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
-import com.revrobotics.spark.SparkClosedLoopController;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.units.VoltageUnit;
-import edu.wpi.first.math.controller.PIDController;
-import com.revrobotics.RelativeEncoder;
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.AnalogInput;
 
 public class ArmSubsystem extends SubsystemBase {
     private final SparkMax armMotor;
@@ -47,20 +31,21 @@ public ArmSubsystem() {
     SparkMaxConfig armConfig = new SparkMaxConfig();
     AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
     absoluteEncoderConfig.zeroCentered(true);
-    absoluteEncoderConfig.zeroOffset(0.66);
+    absoluteEncoderConfig.zeroOffset(0.0);
 
-    armConfig.idleMode(IdleMode.kCoast); //TURN BACK TO BRAKE 
+    armConfig.idleMode(IdleMode.kBrake);
     armConfig.smartCurrentLimit(20);
     armConfig.inverted(true);
+    armConfig.absoluteEncoder.apply(absoluteEncoderConfig);
 
     armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    armFeedforward = new ArmFeedforward(0.17, 0.05, 0.13);
+    armFeedforward = new ArmFeedforward(0.165, 0.055, 0.13);
     armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-        new TrapezoidProfile.Constraints(90, 150), 0.02);
+        new TrapezoidProfile.Constraints(100, 100), 0.02);
 
     armVoltagePID.setGoal(90);
-    armVoltagePID.setTolerance(2.5);
+    armVoltagePID.setTolerance(3.5);
 
 
     armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
@@ -79,12 +64,17 @@ public void stopArm() {
 }
 
 public double getArmAngle() {
-    return armAbsoluteEncoder.getPosition() * 360;
+    double degrees = (armAbsoluteEncoder.getPosition() - 0.67) * 360;
+    if (degrees < 0) {
+        degrees += 360;
+    }
+
+    return degrees;
 }
 
 @Override
 public void periodic() {
-    //  updateArmLoop();
+     updateArmLoop();
 
 
     SmartDashboard.putNumber("Arm Position", getArmAngle());
@@ -107,11 +97,19 @@ public boolean atPosition(double angle) {
 }
 
 public void setTo90() {
-    setArmTargetPosition(90);
+    setArmTargetPosition(85);
+}
+
+public void setSafeRaising() {
+    setArmTargetPosition(80);
 }
 
 public boolean at90() {
-    return atPosition(90);
+    return atPosition(85);
+}
+
+public boolean atSafeRaising() {
+    return atPosition(80);
 }
 
 public void resetProfilePID() {
