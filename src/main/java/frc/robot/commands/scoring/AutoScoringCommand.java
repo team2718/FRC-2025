@@ -74,7 +74,7 @@ public class AutoScoringCommand extends Command {
 
         // Note: X and Y are swapped because the camera is mounted perpendicular to the robot's forward direction
         xDistance = vision.getVisionY();
-        yDistance = -vision.getVisionX();
+        yDistance = vision.getVisionX();
         thetaDistance = vision.getVisionTheta();
 
         double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -0.5, 0.5);

@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -177,16 +178,16 @@ public class RobotContainer {
     driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.4);
 
     // sets scoring positions 
-    secondXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
-    secondXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
+    secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
+    secondXbox.rightBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
-    secondXbox.x().whileTrue(elevatorL4Command);
-    secondXbox.y().whileTrue(elevatorL3Command);
+    secondXbox.y().whileTrue(elevatorL4Command);
+    secondXbox.x().whileTrue(elevatorL3Command);
     secondXbox.b().whileTrue(elevatorL2Command);
     secondXbox.a().whileTrue(elevatorL1Command);
 
-    secondXbox.rightBumper().whileTrue(climbin);
-    secondXbox.leftBumper().whileTrue(climbout);
+    // secondXbox.rightBumper().whileTrue(climbin);
+    // secondXbox.leftBumper().whileTrue(climbout);
 
     elevator.resetPosition();
   }
@@ -194,6 +195,30 @@ public class RobotContainer {
   public void periodic() {
     SmartDashboard.putNumber("Match Time", (2 * 60 + 15) - matchTimer.get());
     updateOdometry();
+
+    double rumble_val = 0;
+    switch (position) {
+      case 1:
+        rumble_val = 0.1;
+        break;
+      case 2:
+        rumble_val = 0.2;
+        break;
+      case 3:
+        rumble_val = 0.3;
+        break;
+      case 4:
+        rumble_val = 0.4;
+        break;
+    }
+
+    if (supersystem.isScoringLeft()) {
+      rumble_val += 0.5;
+    }
+
+    secondXbox.setRumble(RumbleType.kBothRumble, rumble_val);
+
+    // secondXbox.setRumble(RumbleType.kBothRumble, rumble_val/((double)(2*2*2*2*2*2)));
   }
 
   private void adjPosition(int change) {
