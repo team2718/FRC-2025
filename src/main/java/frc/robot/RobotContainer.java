@@ -24,6 +24,7 @@ import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.SuperSystem.ScoringPositions;
 import frc.robot.commands.intake.*;
 import frc.robot.commands.climber.ClimberCommand;
+import frc.robot.commands.elevator.SSElevatorCommand;
 import frc.robot.commands.endeffector.*;
 import frc.robot.commands.scoring.AutoScoringCommand;
 import frc.robot.commands.scoring.ScoringCommand;
@@ -44,8 +45,8 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
   private final CommandXboxController driverXbox = new CommandXboxController(0);
-  // private final CommandXboxController secondXbox = new
-  // CommandXboxController(1);
+  private final CommandXboxController secondXbox = new
+  CommandXboxController(1);
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
       "swerve"));
@@ -72,7 +73,7 @@ public class RobotContainer {
       .deadband(OperatorConstants.DEADBAND)
       .scaleTranslation(OperatorConstants.SPEED_MULTIPLIER)
       .scaleRotation(OperatorConstants.ROTATION_MULTIPLIER)
-      .allianceRelativeControl(false);
+      .allianceRelativeControl(true);
 
   /**
    * Clone's the angular velocity input stream and converts it to a fieldRelative
@@ -98,6 +99,11 @@ public class RobotContainer {
 
   private final ClimberCommand climbout = new ClimberCommand(climber, 0.5);
   private final ClimberCommand climbin = new ClimberCommand(climber, -0.5);
+
+  private final SSElevatorCommand elevatorL4Command = new SSElevatorCommand(supersystem, ScoringPositions.L4);
+  private final SSElevatorCommand elevatorL3Command = new SSElevatorCommand(supersystem, ScoringPositions.L3);
+  private final SSElevatorCommand elevatorL2Command = new SSElevatorCommand(supersystem, ScoringPositions.L2);
+  private final SSElevatorCommand elevatorL1Command = new SSElevatorCommand(supersystem, ScoringPositions.L1);
 
   private int position = 4;
 
@@ -162,17 +168,29 @@ public class RobotContainer {
     driverXbox.leftBumper()
         .whileTrue(new IntakeCommand(intake, -0.5).alongWith(new EndEffectorCommand(endeffector, -0.15)));
 
-    driverXbox.rightTrigger().whileTrue(score);
-    driverXbox.rightBumper().whileTrue(autoScore);
+    driverXbox.rightTrigger().whileTrue(autoScore);
+    driverXbox.rightBumper().whileTrue(score);
 
-    driverXbox.start().whileTrue(climbin);
-    driverXbox.back().whileTrue(climbout);
+   // driverXbox.start().whileTrue(climbin);
+   // driverXbox.back().whileTrue(climbout);
 
-    driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.4);
-    driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.4);
+    //driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.4);
+    //driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.4);
 
-    driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
-    driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
+   // driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
+   // driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
+
+    // sets scoring positions 
+    secondXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
+    secondXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
+
+    secondXbox.x().whileTrue(elevatorL4Command);
+    secondXbox.y().whileTrue(elevatorL3Command);
+    secondXbox.b().whileTrue(elevatorL2Command);
+    secondXbox.a().whileTrue(elevatorL1Command);
+
+    secondXbox.rightBumper().whileTrue(climbin.alongWith(Commands.runOnce(supersystem::setClimbState)));
+    secondXbox.leftBumper().whileTrue(climbout.alongWith(Commands.runOnce(supersystem::setClimbState)));
 
     elevator.resetPosition();
   }

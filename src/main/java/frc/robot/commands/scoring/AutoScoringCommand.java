@@ -3,6 +3,7 @@ package frc.robot.commands.scoring;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.SuperSystem;
@@ -30,6 +31,8 @@ public class AutoScoringCommand extends Command {
     private double yDistance = 0.0;
     private double thetaDistance = 0.0;
 
+    private Timer timer;
+
     public AutoScoringCommand(SuperSystem supersystem, SwerveSubsystem swerve, ArmSubsystem arm, ElevatorSubsystem elevator, EndEffectorSubsystem effector, Vision vision) {
         this.supersystem = supersystem;
         this.arm = arm;
@@ -40,6 +43,8 @@ public class AutoScoringCommand extends Command {
         xPID.setTolerance(0.1);
         yPID.setTolerance(0.1);
         thetaPID.setTolerance(1.0);
+
+        timer = new Timer();
 
         addRequirements(supersystem, swerve, arm, elevator);
     }
@@ -60,6 +65,8 @@ public class AutoScoringCommand extends Command {
         thetaPID.reset();
 
         complete = false;
+
+        timer.reset();
     }
 
     @Override
@@ -78,7 +85,7 @@ public class AutoScoringCommand extends Command {
         thetaDistance = vision.getVisionTheta();
 
         double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -0.5, 0.5);
-        double y = -MathUtil.clamp(yPID.calculate(yDistance, Constants.AutoAlignConstants.reefWallToCamera), -0.5, 0.5);
+        double y = MathUtil.clamp(yPID.calculate(yDistance, -Constants.AutoAlignConstants.reefWallToCamera), -0.5, 0.5);
         double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -0.4, 0.4);
 
         if (complete || (xPID.atSetpoint() && yPID.atSetpoint() && thetaPID.atSetpoint())) {
@@ -86,6 +93,7 @@ public class AutoScoringCommand extends Command {
 
             if (complete || (arm.atPosition() && arm.getArmAngle() < 75)) {
                 complete = true;
+                timer.start();
                 y = -0.8;
                 x = 0;
                 theta = 0;
@@ -102,12 +110,15 @@ public class AutoScoringCommand extends Command {
     public void end(boolean interuppted) {
         supersystem.setIntake();
         effector.setEndEffector(0);
+        swerve.drive(new Translation2d(0, 0), 0, false);
+        timer.stop();
+        timer.reset();
     }
 
     @Override
     public boolean isFinished() {
         if (autonomousFinished) {
-            return (complete && yDistance > 1.5); // Complete the routine once the robot has scored and moved away
+            return (complete && timer.get() > 1.0); // Complete the routine once the robot has scored and moved away
         } else {
             return false;
         }

@@ -10,13 +10,14 @@ public class SuperSystem extends SubsystemBase {
     private enum SuperStates {
         INTAKE_CORAL,
         SCORE_CORAL,
-        ELEVATOR_ONLY
+        ELEVATOR_ONLY,
+        CLIMB
     }
 
     public enum ScoringPositions {
         L1(3, 38.1),
         L2(6.0, 35),
-        L3(15.5, 35),
+        L3(15.5, 34.2),
         L4(29.0, 28);
 
         private double elevator_position;
@@ -75,7 +76,10 @@ public class SuperSystem extends SubsystemBase {
             else if (state != SuperStates.ELEVATOR_ONLY && elevator.atPosition(scoringPosition.getElevatorPosition())) {
                 arm.setArmTargetPosition(scoringPosition.getArmAngle());
             }
-        }
+        }  else if (state == SuperStates.CLIMB) {
+            arm.setArmTargetPosition(32);
+            elevator.setTargetPosition(2);
+        } 
     }
 
     public void setScoringPosition(ScoringPositions position) {
@@ -104,5 +108,9 @@ public class SuperSystem extends SubsystemBase {
 
     public void setScoringRight() {
         this.scoringLeft = false;
+    }
+
+    public void setClimbState() {
+        state = SuperStates.CLIMB;
     }
 }
