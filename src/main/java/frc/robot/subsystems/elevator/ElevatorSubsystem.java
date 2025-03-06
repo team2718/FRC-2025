@@ -42,9 +42,9 @@ public class ElevatorSubsystem extends SubsystemBase {
         elevatormotor1.setControl(voltageControl.withOutput(0.0));
         elevatormotor2.setControl(voltageControl.withOutput(0.0));
 
-        elevatorFeedforward = new ElevatorFeedforward(0.125, 0.355, 0.115, 0.0);
-        elevatorVoltagePID = new ProfiledPIDController(0.1, 0, 0,
-                new TrapezoidProfile.Constraints( 40, 40), 0.02);
+        elevatorFeedforward = new ElevatorFeedforward(0.125, 0.355, 0.123, 0.0);
+        elevatorVoltagePID = new ProfiledPIDController(0.0, 0, 0,
+                new TrapezoidProfile.Constraints( 40, 30), 0.02);
         elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
         elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
     }
@@ -104,6 +104,10 @@ public class ElevatorSubsystem extends SubsystemBase {
                 .calculate(elevatorVoltagePID.getSetpoint().velocity);
 
         voltage = Math.max(-4, Math.min(5, voltage));
+
+        if (voltage < 0.4 && getElevatorAngle() < 0.7) {
+            voltage = 0.7;
+        }
 
         setVoltage(Volts.of(voltage));
 

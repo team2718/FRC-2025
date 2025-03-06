@@ -181,16 +181,16 @@ public class RobotContainer {
    // driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
     // sets scoring positions 
-    secondXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
-    secondXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
+    secondXbox.rightBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
+    secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
-    secondXbox.x().whileTrue(elevatorL4Command);
-    secondXbox.y().whileTrue(elevatorL3Command);
+    secondXbox.y().whileTrue(elevatorL4Command);
+    secondXbox.x().whileTrue(elevatorL3Command);
     secondXbox.b().whileTrue(elevatorL2Command);
     secondXbox.a().whileTrue(elevatorL1Command);
 
-    secondXbox.rightBumper().whileTrue(climbin.alongWith(Commands.runOnce(supersystem::setClimbState)));
-    secondXbox.leftBumper().whileTrue(climbout.alongWith(Commands.runOnce(supersystem::setClimbState)));
+    //secondXbox.rightBumper().whileTrue(climbin.alongWith(Commands.runOnce(supersystem::setClimbState)));
+    //secondXbox.leftBumper().whileTrue(climbout.alongWith(Commands.runOnce(supersystem::setClimbState)));
 
     elevator.resetPosition();
   }
@@ -198,6 +198,8 @@ public class RobotContainer {
   public void periodic() {
     SmartDashboard.putNumber("Match Time", (2 * 60 + 15) - matchTimer.get());
     updateOdometry();
+    
+    
   }
 
   private void adjPosition(int change) {
