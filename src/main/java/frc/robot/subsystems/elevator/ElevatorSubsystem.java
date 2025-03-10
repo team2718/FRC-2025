@@ -10,8 +10,14 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.units.measure.Angle;
@@ -32,15 +38,28 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public double targetSetpointGoalThing = 0.5;
 
+    private double targetSetpointPosition = 0.5;
+
     public ElevatorSubsystem() {
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake; 
 
+        talon_config.Slot0.kG = 0.37;
+        talon_config.Slot0.kS = 0.11;
+        talon_config.Slot0.kV = 0.12;
+        talon_config.Slot0.kA = 0.0008;
+        talon_config.Slot0.kP = 0.4;
+        talon_config.Slot0.kI = 0.0;
+        talon_config.Slot0.kD = 0.0;
+        talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+        talon_config.MotionMagic.MotionMagicAcceleration = 1;
+        talon_config.MotionMagic.MotionMagicCruiseVelocity = 40;
+
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
 
-        elevatormotor1.setControl(voltageControl.withOutput(0.0));
-        elevatormotor2.setControl(voltageControl.withOutput(0.0));
+        // elevatormotor1.setControl(new MotionMagicVoltage));
+        elevatormotor2.setControl(new Follower(Constants.ElevatorConstants.elevatormotor1ID, false));
 
         elevatorFeedforward = new ElevatorFeedforward(0.125, 0.355, 0.123, 0.0);
         elevatorVoltagePID = new ProfiledPIDController(0.0, 0, 0,
@@ -52,11 +71,12 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        updateElevatorLoop();
+        // updateElevatorLoop();
+        elevatormotor1.setControl(new MotionMagicExpoVoltage(targetSetpointPosition));
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
         SmartDashboard.putNumber("Elevator Velocity", elevatormotor1.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Desired Elevator Position", elevatorVoltagePID.getSetpoint().position);
+        SmartDashboard.putNumber("Desired Elevator Position", targetSetpointPosition);
         SmartDashboard.putNumber("Desired Elevator Velocity", elevatorVoltagePID.getSetpoint().velocity);
     }
 
@@ -92,7 +112,9 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     public void setTargetPosition(double position) {
-        elevatorVoltagePID.setGoal(position);
+        targetSetpointPosition = position;
+        SmartDashboard.putNumber("Elevator Voltage", elevatormotor1.getMotorVoltage().getValueAsDouble());
+        // elevatorVoltagePID.setGoal(position);
     }
 
     public void resetProfilePID() {
