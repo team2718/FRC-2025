@@ -16,8 +16,8 @@ public class SuperSystem extends SubsystemBase {
 
     public enum ScoringPositions {
         L1(3, 38.1),
-        L2(6.0, 35),
-        L3(15.5, 34.2),
+        L2(8.2, 29),
+        L3(16.5, 29),
         L4(29.0, 28);
 
         private double elevator_position;
@@ -59,10 +59,10 @@ public class SuperSystem extends SubsystemBase {
             arm.setTo90();
 
             if (arm.at90()) {
-                elevator.setTargetPosition(0.7);
+                elevator.setTargetPosition(0.6);
             }
         } else if (state == SuperStates.SCORE_CORAL || state == SuperStates.ELEVATOR_ONLY) {
-            // First, if the elevator is at the wrong position, bring the arm in first
+            // if the elevator is at the wrong position, bring the arm in first
             if (!arm.atSafeRaising() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
                 arm.setSafeRaising();
             }

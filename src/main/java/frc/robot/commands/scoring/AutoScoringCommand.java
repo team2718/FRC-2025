@@ -40,8 +40,8 @@ public class AutoScoringCommand extends Command {
         this.swerve = swerve;
         this.effector = effector;
 
-        xPID.setTolerance(0.1);
-        yPID.setTolerance(0.1);
+        xPID.setTolerance(0.3);
+        yPID.setTolerance(0.3);
         thetaPID.setTolerance(1.0);
 
         timer = new Timer();
@@ -91,7 +91,7 @@ public class AutoScoringCommand extends Command {
         if (complete || (xPID.atSetpoint() && yPID.atSetpoint() && thetaPID.atSetpoint())) {
             supersystem.setScoring();
 
-            if (complete || (arm.atPosition() && arm.getArmAngle() < 75)) {
+            if (complete || (arm.atPosition() && arm.getArmAngle() < 60)) {
                 complete = true;
                 timer.start();
                 y = -0.8;

@@ -164,9 +164,14 @@ public class RobotContainer {
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
     driverXbox.leftTrigger()
-        .whileTrue(new IntakeCommand(intake, 0.45).alongWith(new EndEffectorCommand(endeffector, 0.9)));
+        .whileTrue(new IntakeCommand(intake, 0.45)
+        .alongWith(new EndEffectorCommand(endeffector, 0.9))
+        .alongWith(Commands.runOnce(() -> elevator.resetProfilePID())));
     driverXbox.leftBumper()
         .whileTrue(new IntakeCommand(intake, -0.5).alongWith(new EndEffectorCommand(endeffector, -0.15)));
+
+      driverXbox.b()
+        .whileTrue(new EndEffectorCommand(endeffector, -0.5));
 
     driverXbox.rightTrigger().whileTrue(autoScore);
     driverXbox.rightBumper().whileTrue(score);
@@ -181,8 +186,8 @@ public class RobotContainer {
    // driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
     // sets scoring positions 
-    secondXbox.rightBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
-    secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
+    secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
+    secondXbox.rightBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
     secondXbox.y().whileTrue(elevatorL4Command);
     secondXbox.x().whileTrue(elevatorL3Command);

@@ -74,6 +74,6 @@ public final class Constants {
   public static final class AutoAlignConstants {
     public static final double leftBranchToCamera = -0.05; // meters
     public static final double distanceBetweenBranches = Units.inchesToMeters(12.94);
-    public static final double reefWallToCamera = 0.84; // meters
+    public static final double reefWallToCamera = 0.82; // meters
   }
 }

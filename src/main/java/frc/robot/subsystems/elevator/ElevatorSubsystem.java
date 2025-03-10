@@ -105,9 +105,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         voltage = Math.max(-4, Math.min(5, voltage));
 
-        if (voltage < 0.4 && getElevatorAngle() < 0.7) {
-            voltage = 0.7;
-        }
+        // if (voltage < 0.4 && getElevatorAngle() < 0.7) {
+        //     voltage = 0.6;
+        // }
 
         setVoltage(Volts.of(voltage));
 

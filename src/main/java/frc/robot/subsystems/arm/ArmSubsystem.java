@@ -101,7 +101,7 @@ public void setTo90() {
 }
 
 public void setSafeRaising() {
-    setArmTargetPosition(80);
+    setArmTargetPosition(75);
 }
 
 public boolean at90() {
@@ -109,7 +109,7 @@ public boolean at90() {
 }
 
 public boolean atSafeRaising() {
-    return atPosition(80);
+    return atPosition(75);
 }
 
 public void resetProfilePID() {
