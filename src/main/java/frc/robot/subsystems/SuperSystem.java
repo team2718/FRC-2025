@@ -98,6 +98,10 @@ public class SuperSystem extends SubsystemBase {
         state = SuperStates.ELEVATOR_ONLY;
     }
 
+    public ScoringPositions getScoringPosition() {
+        return scoringPosition;
+    }
+
     public boolean isScoringLeft() {
         return scoringLeft;
     }

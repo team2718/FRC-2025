@@ -15,6 +15,7 @@ import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -48,12 +49,12 @@ public class ElevatorSubsystem extends SubsystemBase {
         talon_config.Slot0.kS = 0.11;
         talon_config.Slot0.kV = 0.12;
         talon_config.Slot0.kA = 0.0008;
-        talon_config.Slot0.kP = 0.4;
+        talon_config.Slot0.kP = 0.9;
         talon_config.Slot0.kI = 0.0;
         talon_config.Slot0.kD = 0.0;
         talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
-        talon_config.MotionMagic.MotionMagicAcceleration = 1;
-        talon_config.MotionMagic.MotionMagicCruiseVelocity = 40;
+        talon_config.MotionMagic.MotionMagicAcceleration = 60;
+        talon_config.MotionMagic.MotionMagicCruiseVelocity = 30;
 
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
@@ -72,7 +73,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         // updateElevatorLoop();
-        elevatormotor1.setControl(new MotionMagicExpoVoltage(targetSetpointPosition));
+        elevatormotor1.setControl(new MotionMagicVoltage(targetSetpointPosition));
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
         SmartDashboard.putNumber("Elevator Velocity", elevatormotor1.getVelocity().getValueAsDouble());
