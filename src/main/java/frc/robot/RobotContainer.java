@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -200,11 +201,40 @@ public class RobotContainer {
     elevator.resetPosition();
   }
 
+  private int stateToButtonBox() {
+    int[] buttonBoxLEDs = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    switch (supersystem.getScoringPosition()) {
+      case L1:
+        buttonBoxLEDs[0] = 1;
+        break;
+      case L2:
+        buttonBoxLEDs[1] = 1;
+        break;
+      case L3:
+        buttonBoxLEDs[2] = 1;
+        break;
+      case L4:
+        buttonBoxLEDs[3] = 1;
+        break;
+    }
+
+    if (supersystem.isScoringLeft()) {
+      buttonBoxLEDs[4] = 1;
+      buttonBoxLEDs[5] = 1;
+    } else {
+      buttonBoxLEDs[6] = 1;
+      buttonBoxLEDs[7] = 1;
+    }
+
+    return buttonBoxLEDs[0] * 1 + buttonBoxLEDs[1] * 2 + buttonBoxLEDs[2] * 4 + buttonBoxLEDs[3] * 8 + buttonBoxLEDs[4] * 16
+        + buttonBoxLEDs[5] * 32 + buttonBoxLEDs[6] * 64 + buttonBoxLEDs[7] * 128;
+  }
+
   public void periodic() {
+    secondXbox.setRumble(RumbleType.kRightRumble, stateToButtonBox() / 255.0);
     SmartDashboard.putNumber("Match Time", (2 * 60 + 15) - matchTimer.get());
     updateOdometry();
-    
-    
   }
 
   private void adjPosition(int change) {

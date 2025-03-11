@@ -86,6 +86,10 @@ public class SuperSystem extends SubsystemBase {
         scoringPosition = position;
     }
 
+    public ScoringPositions getScoringPosition() {
+        return scoringPosition;
+    }
+
     public void setIntake() {
         state = SuperStates.INTAKE_CORAL;
     }
