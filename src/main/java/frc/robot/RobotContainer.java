@@ -233,7 +233,10 @@ public class RobotContainer {
 
   public void periodic() {
     secondXbox.setRumble(RumbleType.kRightRumble, stateToButtonBox() / 255.0);
+    secondXbox.setRumble(RumbleType.kLeftRumble, 1); // Set it to anything to let the button box know it's a "real" command
+
     SmartDashboard.putNumber("Match Time", (2 * 60 + 15) - matchTimer.get());
+    
     updateOdometry();
   }
 
