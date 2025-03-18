@@ -2,11 +2,14 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+
 package frc.robot;
+
 
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
+
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -22,9 +25,11 @@ import swervelib.math.Matter;
  */
 public final class Constants {
 
+
   // Competition mode will remove or reduce feedback to minmize unnecessary
   // computation
   public static final boolean COMPETITION_MODE = false;
+
 
   // Robot constants
   public static final double ROBOT_MASS = Units.lbsToKilograms(130);
@@ -33,18 +38,23 @@ public final class Constants {
   public static final double LOOP_TIME = 0.13; // s, 20ms + 110ms sprk max velocity lag
   public static final double MAX_SPEED = Units.feetToMeters(12.9);
 
+
   public static final class DrivebaseConstants {
+
 
     // Hold time on motor brakes when disabled
     public static final double WHEEL_LOCK_TIME = 10; // seconds
   }
 
+
   public static class OperatorConstants {
+
 
     public static final double SPEED_MULTIPLIER = 0.6;
     public static final double ROTATION_MULTIPLIER = 0.6;
     public static final double DEADBAND = 0.3;
   }
+
 
   public static final class IntakeConstants {
     public static final int intakemotorID = 10;
@@ -52,28 +62,40 @@ public final class Constants {
     public static final int flappermotorID = 16;
   }
 
+
   public static final class ArmConstants {
     public static final int armMotorID = 13;
   }
 
+
   public static final class EndEffectorConstants {
     public static final int endeffectormotor1ID = 14;
   }
+
 
   public static final class ElevatorConstants {
     public static final int elevatormotor1ID = 11;
     public static final int elevatormotor2ID = 12;
     public static final double elevatorTolerance = 2;
 
+
   }
+
 
   public static final class ClimberConstants {
     public static final int climbermotorID = 15;
   }
 
+
   public static final class AutoAlignConstants {
     public static final double leftBranchToCamera = -0.05; // meters
     public static final double distanceBetweenBranches = Units.inchesToMeters(12.94);
     public static final double reefWallToCamera = 0.82; // meters
+  }
+
+
+  public static final class LEDS {
+    public static final int PWMPort = 5; // Will update to the actual numbers once we get the LEDs set up
+    public static final int Length = 20; // What he said ^^^
   }
 }
