@@ -10,6 +10,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
+
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -23,6 +26,8 @@ public class ArmSubsystem extends SubsystemBase {
     private final ProfiledPIDController armVoltagePID;
     private final ArmFeedforward armFeedforward;
     private final SparkAbsoluteEncoder armAbsoluteEncoder;
+
+    Alert armMotorAlert;
     
 
 public ArmSubsystem() {
@@ -50,6 +55,7 @@ public ArmSubsystem() {
 
     armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
     
+    armMotorAlert = new Alert("Motor \"" + "Arm Motor" + "\" is not connected!", AlertType.kError);
 }
 
 
@@ -127,6 +133,17 @@ public void updateArmLoop() {
 public void setVoltage(Voltage volts) {
     
         armMotor.setVoltage(volts);
+    }
+
+    // alerts us if the arm motor is not detected
+    public Alert setArmMotorAlert() {
+        if (armMotor.getBusVoltage() > 0) {
+            armMotorAlert.set(false); 
+        } else {
+            armMotorAlert.set(true);
+        }
+        
+        return armMotorAlert;
     }
 }
 

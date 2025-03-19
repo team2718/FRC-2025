@@ -6,6 +6,9 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -19,6 +22,9 @@ public class IntakeSubsystem extends SubsystemBase {
     public boolean flapperset = false;
 
     SparkMaxConfig flapperConfig;
+
+    Alert intakeMotorAlert;
+    Alert flapperMotorAlert;
 
     public IntakeSubsystem() {
         intakemotor = new SparkMax(Constants.IntakeConstants.intakemotorID, MotorType.kBrushless);
@@ -34,6 +40,9 @@ public class IntakeSubsystem extends SubsystemBase {
         flappermotor.configure(flapperConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         IntakeLimitSwitch = new DigitalInput(Constants.IntakeConstants.intakeLimitSwitchChannel);
+
+        intakeMotorAlert = new Alert("Motor \"" + "Intake Motor" + "\" is not connected!", AlertType.kError);
+        flapperMotorAlert = new Alert("Motor \"" + "Flapper Motor" + "\" is not connected!", AlertType.kError);
     }
 
     @Override
@@ -67,6 +76,28 @@ public class IntakeSubsystem extends SubsystemBase {
     // testing if the limit switch sees the note or not
     public boolean hasNote() {
         return !IntakeLimitSwitch.get();
+    }
+
+    // alerts us if the intake motor is not detected
+    public Alert setIntakeMotorAlert() {
+        if (intakemotor.getBusVoltage() > 0) {
+            intakeMotorAlert.set(false); 
+        } else {
+            intakeMotorAlert.set(true);
+        }
+        
+        return intakeMotorAlert;
+    }
+
+    // alerts us if the flapper motor is not detected
+    public Alert setFlapperMotorAlert() {
+        if (flappermotor.getBusVoltage() > 0) {
+            flapperMotorAlert.set(false); 
+        } else {
+            flapperMotorAlert.set(true);
+        }
+        
+        return flapperMotorAlert;
     }
 
 }
