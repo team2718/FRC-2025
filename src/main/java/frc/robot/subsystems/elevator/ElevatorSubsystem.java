@@ -10,8 +10,17 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import static edu.wpi.first.units.Units.Volts;
 import edu.wpi.first.units.measure.Angle;
@@ -24,103 +33,75 @@ public class ElevatorSubsystem extends SubsystemBase {
     final TalonFX elevatormotor2 = new TalonFX(Constants.ElevatorConstants.elevatormotor2ID);
     private TalonFXConfiguration talon_config = new TalonFXConfiguration();
     final VoltageOut voltageControl = new VoltageOut(0.0);
-    private final ProfiledPIDController elevatorVoltagePID;
-    private final ElevatorFeedforward elevatorFeedforward;
-    private final StatusSignal<Angle> elevatorRelativeEncoder;
-    double startingposition = 0;
-    public double currentVoltage;
 
     public double targetSetpointGoalThing = 0.5;
+    private double targetSetpointPosition = 0.5;
+
+    private boolean enabled = true; // used to enable/disable elevator control
 
     public ElevatorSubsystem() {
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
-        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake; 
+        talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        talon_config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        talon_config.Slot0.kG = 0.5; // TODO: retune after post-MOSE redesign
+        talon_config.Slot0.kS = 0.11; // TODO: retune after post-MOSE redesign
+        talon_config.Slot0.kV = 0.131;
+        talon_config.Slot0.kA = 0.0011;
+        talon_config.Slot0.kP = 1.8;
+        talon_config.Slot0.kI = 0.0;
+        talon_config.Slot0.kD = 0.0;
+        talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+        talon_config.MotionMagic.MotionMagicCruiseVelocity = 50;
+        talon_config.MotionMagic.MotionMagicAcceleration = 75;
+        talon_config.MotionMagic.MotionMagicJerk = 2000;
 
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
 
-        elevatormotor1.setControl(voltageControl.withOutput(0.0));
-        elevatormotor2.setControl(voltageControl.withOutput(0.0));
+        elevatormotor1.getPosition().setUpdateFrequency(100);
+        elevatormotor1.setPosition(0.0, 1.0); // reset position to 0
 
-        elevatorFeedforward = new ElevatorFeedforward(0.125, 0.355, 0.123, 0.0);
-        elevatorVoltagePID = new ProfiledPIDController(0.0, 0, 0,
-                new TrapezoidProfile.Constraints( 40, 30), 0.02);
-        elevatorVoltagePID.setTolerance(Constants.ElevatorConstants.elevatorTolerance);
-        elevatorRelativeEncoder = elevatormotor1.getRotorPosition();
+        // elevatormotor1.setControl(new MotionMagicVoltage));
+        elevatormotor2.setControl(new Follower(Constants.ElevatorConstants.elevatormotor1ID, false));
     }
 
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @Override
     public void periodic() {
-        updateElevatorLoop();
+        if (enabled) {
+            elevatormotor1.setControl(new MotionMagicVoltage(targetSetpointPosition));
+        } else {
+            elevatormotor1.setControl(new NeutralOut());
+        }
 
         SmartDashboard.putNumber("Elevator Position", getElevatorAngle());
         SmartDashboard.putNumber("Elevator Velocity", elevatormotor1.getVelocity().getValueAsDouble());
-        SmartDashboard.putNumber("Desired Elevator Position", elevatorVoltagePID.getSetpoint().position);
-        SmartDashboard.putNumber("Desired Elevator Velocity", elevatorVoltagePID.getSetpoint().velocity);
-    }
-
-    public void resetPosition() {
-        startingposition = elevatorRelativeEncoder.getValueAsDouble();
+        SmartDashboard.putNumber("Desired Elevator Position", targetSetpointPosition);
+        SmartDashboard.putNumber("Elevator Voltage", elevatormotor1.getMotorVoltage().getValueAsDouble());
     }
 
     public boolean atPosition() {
-        return elevatorVoltagePID.atGoal();
+        return Math.abs(
+                getElevatorAngle() - targetSetpointPosition) < Constants.ElevatorConstants.elevatorPositionTolerance;
     }
 
     public boolean atPosition(double position) {
-        return Math.abs(getElevatorAngle() - position) < elevatorVoltagePID.getPositionTolerance(); 
-    }
-
-    public void stopElevator() {
-        elevatormotor1.set(0);
-    }
-
-    public void incrementGoal() {
-        targetSetpointGoalThing += 0.5;
-        elevatorVoltagePID.setGoal(targetSetpointGoalThing);
-    }
-
-    public void decrementGoal() {
-        targetSetpointGoalThing -= 0.5;
-        elevatorVoltagePID.setGoal(targetSetpointGoalThing);
-
-    }
-
-    public void elevatorGo(double voltage) {
-        elevatormotor1.set(voltage);
+        return Math.abs(getElevatorAngle() - position) < Constants.ElevatorConstants.elevatorPositionTolerance;
     }
 
     public void setTargetPosition(double position) {
-        elevatorVoltagePID.setGoal(position);
-    }
-
-    public void resetProfilePID() {
-        elevatorVoltagePID.reset(getElevatorAngle());
-    }
-
-    public void updateElevatorLoop() {
-        double voltage = elevatorVoltagePID.calculate(getElevatorAngle()) + elevatorFeedforward
-                .calculate(elevatorVoltagePID.getSetpoint().velocity);
-
-        voltage = Math.max(-4, Math.min(5, voltage));
-
-        // if (voltage < 0.4 && getElevatorAngle() < 0.7) {
-        //     voltage = 0.6;
-        // }
-
-        setVoltage(Volts.of(voltage));
-
-        SmartDashboard.putNumber("Elevator Voltage", voltage);
+        targetSetpointPosition = position;
     }
 
     public double getElevatorAngle() {
-        return elevatormotor1.getRotorPosition().getValueAsDouble() - startingposition;
+        return elevatormotor1.getPosition().getValueAsDouble();
 
     }
 
     public void setVoltage(Voltage volts) {
-
         elevatormotor1.setVoltage(volts.in(Volts));
         elevatormotor2.setVoltage(volts.in(Volts));
     }

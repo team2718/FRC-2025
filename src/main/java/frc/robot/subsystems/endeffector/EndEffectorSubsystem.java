@@ -1,5 +1,6 @@
 package frc.robot.subsystems.endeffector;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -13,9 +14,30 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 // one or two motors, 
 public class EndEffectorSubsystem extends SubsystemBase {
     private final SparkMax endeffectormotor1;
-
+    private final Timer timer;
+    private boolean tempHasCoral = false;
     private boolean hasCoral = false;
+    private boolean enabled = true;
+
+    private enum State {
+        HOLD,
+        INTAKE,
+        OUTTAKE,
+        SCORE,
+        DEALGIFY
+    }
+
+    private State currentState = State.HOLD;
+
+    private final double senseCurrent = 14.0; // Current reached when a coral has been intook
+    private final double senseDelay = 0.2; // Seconds after starting intaking to start sensing (to avoid motor start
+                                           // spike)
+    private final double extraIntakeTimer = 0.2; // Seconds to continue intaking after detecting coral
+
+    private double senseTime = 0.0;
+
     public EndEffectorSubsystem() {
+        timer = new Timer();
         endeffectormotor1 = new SparkMax(Constants.EndEffectorConstants.endeffectormotor1ID, MotorType.kBrushless);
         SparkMaxConfig endeffectorConfig = new SparkMaxConfig();
         endeffectorConfig.idleMode(IdleMode.kBrake);
@@ -24,39 +46,88 @@ public class EndEffectorSubsystem extends SubsystemBase {
         endeffectormotor1.configure(endeffectorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @Override
     public void periodic() {
 
-        // if (!hasCoral && (endeffectormotor1.getOutputCurrent() > 10 && endeffectormotor1.getAppliedOutput() > 0)) {
-        //     has_coral_timer.start();
-        // }
+        // Set hasCoral if we are intaking, we are past the startup period, and we have
+        // more current than normal
+        if (currentState == State.INTAKE && !tempHasCoral && !hasCoral && timer.hasElapsed(senseDelay)
+                && endeffectormotor1.getOutputCurrent() > senseCurrent) {
+            tempHasCoral = true;
+            senseTime = timer.get();
+        }
 
-        // if (!hasCoral && has_coral_timer.isRunning() && !(endeffectormotor1.getOutputCurrent() > 10 && endeffectormotor1.getAppliedOutput() > 0)) {
-        //     has_coral_timer.stop();
-        //     has_coral_timer.reset();
-        // }
+        if (tempHasCoral && timer.get() - senseTime > extraIntakeTimer) { // If we have coral for more than 0.2 seconds,
+                                                                          // stop intaking
+            if (endeffectormotor1.getOutputCurrent() < senseCurrent) {
+                tempHasCoral = false;
+            } else {
+                hasCoral = true;
+                setHold();
+            }
+        }
 
-        // if (hasCoral || has_coral_timer.hasElapsed(0.5)) {
-        //     has_coral_timer.stop();
-        //     has_coral_timer.reset();
-        //     hasCoral = true;
-        //     endeffectormotor1.set(0);
-        // }
-        
+        switch (currentState) {
+            case HOLD:
+                endeffectormotor1.set(0);
+                break;
+            case INTAKE, SCORE:
+                endeffectormotor1.set(0.3);
+                break;
+            case OUTTAKE:
+                endeffectormotor1.set(-0.3);
+                break;
+            case DEALGIFY:
+                endeffectormotor1.set(0.7);
+                break;
+        }
+
+        SmartDashboard.putString("Effector State", currentState.name());
         SmartDashboard.putBoolean("Has Coral", hasCoral);
+        SmartDashboard.putNumber("Effector Current", endeffectormotor1.getOutputCurrent());
     }
 
-    public void setEndEffector(double speed) {
-
-        // if (hasCoral) {
-        //     speed = 0;
-        // }
-
-        // if (hasCoral && speed < 0) {
-        //     hasCoral = false;
-        // }
-
-        endeffectormotor1.set(speed);
+    public boolean hasCoral() {
+        return hasCoral;
     }
 
+    public void setHold() {
+        currentState = State.HOLD;
+        timer.stop();
+        timer.reset();
+    }
+
+    public void setIntake() {
+        // Don't intake if we already have coral
+        if (hasCoral) {
+            return;
+        }
+
+        currentState = State.INTAKE;
+        timer.start();
+    }
+
+    public void setOuttake() {
+        currentState = State.OUTTAKE;
+        timer.stop();
+        timer.reset();
+        hasCoral = false; // Assume any coral is leaving
+        tempHasCoral = false; // Reset tempHasCoral to avoid false positives
+    }
+
+    public void setScore() {
+        currentState = State.SCORE;
+        timer.stop();
+        timer.reset();
+        hasCoral = false; // Assume any coral is leaving
+        tempHasCoral = false; // Reset tempHasCoral to avoid false positives
+    }
+
+    public void setDealgify() {
+        currentState = State.DEALGIFY;
+    }
 }

@@ -44,7 +44,8 @@ public class Vision {
   /**
    * April Tag Field Layout of the year.
    */
-  public static final AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+  public static final AprilTagFieldLayout fieldLayout = AprilTagFieldLayout
+      .loadField(AprilTagFields.k2025ReefscapeWelded);
   /**
    * Photon Vision Simulation
    */
@@ -67,14 +68,14 @@ public class Vision {
     this.field2d = field;
 
     // if (Robot.isSimulation()) {
-    //   visionSim = new VisionSystemSim("Vision");
-    //   visionSim.addAprilTags(fieldLayout);
+    // visionSim = new VisionSystemSim("Vision");
+    // visionSim.addAprilTags(fieldLayout);
 
-    //   for (Cameras c : Cameras.values()) {
-    //     c.addToVisionSim(visionSim);
-    //   }
+    // for (Cameras c : Cameras.values()) {
+    // c.addToVisionSim(visionSim);
+    // }
 
-    //   openSimCameraViews();
+    // openSimCameraViews();
     // }
   }
 
@@ -104,29 +105,28 @@ public class Vision {
    * @param swerveDrive {@link SwerveDrive} instance.
    */
   public void updatePoseEstimation(SwerveDrive swerveDrive) {
-    // if (SwerveDriveTelemetry.isSimulation && swerveDrive.getSimulationDriveTrainPose().isPresent()) {
-    //   /*
-    //    * In the maple-sim, odometry is simulated using encoder values, accounting for
-    //    * factors like skidding and drifting.
-    //    * As a result, the odometry may not always be 100% accurate.
-    //    * However, the vision system should be able to provide a reasonably accurate
-    //    * pose estimation, even when odometry is incorrect.
-    //    * (This is why teams implement vision system to correct odometry.)
-    //    * Therefore, we must ensure that the actual robot pose is provided in the
-    //    * simulator when updating the vision simulation during the simulation.
-    //    */
-    //   visionSim.update(swerveDrive.getSimulationDriveTrainPose().get());
+    // if (SwerveDriveTelemetry.isSimulation &&
+    // swerveDrive.getSimulationDriveTrainPose().isPresent()) {
+    // /*
+    // * In the maple-sim, odometry is simulated using encoder values, accounting
+    // for
+    // * factors like skidding and drifting.
+    // * As a result, the odometry may not always be 100% accurate.
+    // * However, the vision system should be able to provide a reasonably accurate
+    // * pose estimation, even when odometry is incorrect.
+    // * (This is why teams implement vision system to correct odometry.)
+    // * Therefore, we must ensure that the actual robot pose is provided in the
+    // * simulator when updating the vision simulation during the simulation.
+    // */
+    // visionSim.update(swerveDrive.getSimulationDriveTrainPose().get());
     // }
     for (Cameras camera : Cameras.values()) {
       Optional<EstimatedRobotPose> poseEst = getEstimatedGlobalPose(camera);
       if (poseEst.isPresent()) {
-        SmartDashboard.putBoolean("Vision Can See Target", true);
         var pose = poseEst.get();
         swerveDrive.addVisionMeasurement(pose.estimatedPose.toPose2d(),
             pose.timestampSeconds,
             camera.curStdDevs);
-      } else {
-        SmartDashboard.putBoolean("Vision Can See Target", false);
       }
     }
 
@@ -145,17 +145,21 @@ public class Vision {
   public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Cameras camera) {
     Optional<EstimatedRobotPose> poseEst = camera.getEstimatedGlobalPose();
     // if (Robot.isSimulation()) {
-    //   Field2d debugField = visionSim.getDebugField();
-    //   // Uncomment to enable outputting of vision targets in sim.
-    //   poseEst.ifPresentOrElse(
-    //       est -> debugField
-    //           .getObject("VisionEstimation")
-    //           .setPose(est.estimatedPose.toPose2d()),
-    //       () -> {
-    //         debugField.getObject("VisionEstimation").setPoses();
-    //       });
+    // Field2d debugField = visionSim.getDebugField();
+    // // Uncomment to enable outputting of vision targets in sim.
+    // poseEst.ifPresentOrElse(
+    // est -> debugField
+    // .getObject("VisionEstimation")
+    // .setPose(est.estimatedPose.toPose2d()),
+    // () -> {
+    // debugField.getObject("VisionEstimation").setPoses();
+    // });
     // }
     return poseEst;
+  }
+
+  public boolean visionCanSeeTarget() {
+    return Cameras.SCORING_CAM.lastBestResult.isPresent();
   }
 
   public double getVisionX() {
@@ -187,7 +191,7 @@ public class Vision {
 
     double radians = bestResult.get().getBestCameraToTarget().getRotation().getZ();
     radians += Math.PI;
-    
+
     if (radians > Math.PI) {
       radians -= 2 * Math.PI;
     }
@@ -226,7 +230,6 @@ public class Vision {
   public VisionSystemSim getVisionSim() {
     return visionSim;
   }
-
 
   /**
    * Update the {@link Field2d} to include tracked targets/
@@ -313,6 +316,7 @@ public class Vision {
      * queries.
      */
     public List<PhotonPipelineResult> resultsList = new ArrayList<>();
+
     /**
      * Construct a Photon Camera class with help. Standard deviations are fake
      * values, experiment and determine
@@ -417,23 +421,23 @@ public class Vision {
       if (resultsList.isEmpty()) {
         return null;
       }
-  
+
       for (PhotonTrackedTarget target : resultsList.get(0).getTargets()) {
         if (target.getFiducialId() == fiducialId) {
           return target;
         }
       }
-  
+
       return null;
     }
-  
+
     public double distanceToTarget(PhotonTrackedTarget target, double tagHeight, double cameraHeight,
         double cameraAngle) {
-  
+
       if (target == null) {
         return 1000; // Set very high so LUT commands the pivot down
       }
-  
+
       return PhotonUtils.calculateDistanceToTargetMeters(
           robotToCamTransform.getZ(),
           TARGET_HEIGHT_METERS,
@@ -464,13 +468,28 @@ public class Vision {
      * Sorts the list by timestamp.
      */
     private void updateUnreadResults() {
+      lastBestResult = Optional.empty(); // Reset the last best result
       if (resultsList.isEmpty()) {
         resultsList = camera.getAllUnreadResults();
 
         if (!resultsList.isEmpty()) {
-          PhotonTrackedTarget wowwee = resultsList.get(0).getBestTarget();
-          if (wowwee != null) {
-            lastBestResult = Optional.of(wowwee);
+          PhotonPipelineResult latestResult = resultsList.get(0);
+
+          double bestAngle = 35; // Max angle to align with
+          for (PhotonTrackedTarget target : latestResult.getTargets()) {
+            double radians = target.getBestCameraToTarget().getRotation().getZ();
+
+            radians += Math.PI;
+            if (radians > Math.PI) {
+              radians -= 2 * Math.PI;
+            }
+
+            double degrees = -Math.toDegrees(radians);
+
+            if (Math.abs(degrees) < bestAngle) {
+              bestAngle = Math.abs(degrees);
+              lastBestResult = Optional.of(target);
+            }
           }
         }
       }

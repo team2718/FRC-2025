@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.arm.ArmSubsystem;
@@ -15,17 +16,21 @@ public class SuperSystem extends SubsystemBase {
     }
 
     public enum ScoringPositions {
-        L1(3, 38.1),
-        L2(8.2, 29),
-        L3(16.5, 29),
-        L4(29.0, 28);
+        
+        L1(2.0, 58.8, 0.75),
+        L2(3.0, 55.3, 0.75),
+        L3(12.0, 50.3, 0.75),
+        L4(27.33, 44.4, 0.83);
 
+        
         private double elevator_position;
         private double arm_angle;
+        private double reef_distance;
 
-        ScoringPositions(double elevator_position, double arm_angle) {
+        ScoringPositions(double elevator_position, double arm_angle, double reef_distance) {
             this.elevator_position = elevator_position;
             this.arm_angle = arm_angle;
+            this.reef_distance = reef_distance;
         }
 
         public double getElevatorPosition() {
@@ -34,6 +39,10 @@ public class SuperSystem extends SubsystemBase {
 
         public double getArmAngle() {
             return arm_angle;
+        }
+
+        public double getReefDistance() {
+            return reef_distance;
         }
     }
 
@@ -44,9 +53,29 @@ public class SuperSystem extends SubsystemBase {
     private ScoringPositions scoringPosition = ScoringPositions.L4;
     private boolean scoringLeft = true;
 
+    private double dialPosition = 0;
+
+    private double dialElevator = 0.0;
+    private double dialArm = 0.0;
+    private boolean dialControlArm = false;
+    private boolean dialIsReady = false;
+
     public SuperSystem(ArmSubsystem arm, ElevatorSubsystem elevator) {
         this.arm = arm;
         this.elevator = elevator;
+    }
+
+    public void setDialPosition(double dialPosition) {
+        this.dialPosition = dialPosition;
+    }
+
+    public void setDialContrlArm(boolean dialControlArm) {
+        if (this.dialControlArm == dialControlArm) {
+            return;
+        }
+
+        this.dialControlArm = dialControlArm;
+        this.dialIsReady = false;
     }
 
     @Override
@@ -54,12 +83,41 @@ public class SuperSystem extends SubsystemBase {
         SmartDashboard.putString("Scoring Position", this.scoringPosition.name() + " - " + (this.scoringLeft ? " Left" : "Right"));
         SmartDashboard.putString("Super State", this.state.name());
 
+        if (DriverStation.isTest()) {
+
+            if (dialControlArm && Math.abs(dialPosition - dialArm) < 0.05) {
+                dialIsReady = true;
+            }
+
+            if (!dialControlArm && Math.abs(dialPosition - dialElevator) < 0.05) {
+                dialIsReady = true;
+            }
+
+            if (dialIsReady) {
+                if (dialControlArm) {
+                    dialArm = dialPosition;
+                    // dialArm = 90.0 - (dialPosition * 90.0);
+                } else {
+                    dialElevator = dialPosition;
+                    // dialElevator = dialPosition * 27.5 + 0.5;
+                }
+            }
+            
+            elevator.setTargetPosition(dialElevator * 27.5 + 0.5);
+            arm.setArmTargetPosition(90.0 - (dialArm * 90.0));
+            return;
+        }
+
         if (state == SuperStates.INTAKE_CORAL) {
             // Get the arm back in first, then move the elevator down
-            arm.setTo90();
+            if (elevator.getElevatorAngle() > 1.0) {
+                arm.setTo90();
+            } else {
+                arm.setToIntake();
+            }
 
-            if (arm.at90()) {
-                elevator.setTargetPosition(0.6);
+            if (arm.atIntake() || arm.at90()) {
+                elevator.setTargetPosition(0.05);
             }
         } else if (state == SuperStates.SCORE_CORAL || state == SuperStates.ELEVATOR_ONLY) {
             // if the elevator is at the wrong position, bring the arm in first
@@ -86,6 +144,10 @@ public class SuperSystem extends SubsystemBase {
         scoringPosition = position;
     }
 
+    public ScoringPositions getScoringPosition() {
+        return scoringPosition;
+    }
+
     public void setIntake() {
         state = SuperStates.INTAKE_CORAL;
     }
@@ -97,7 +159,7 @@ public class SuperSystem extends SubsystemBase {
     public void setMoveAuto() {
         state = SuperStates.ELEVATOR_ONLY;
     }
-
+    
     public boolean isScoringLeft() {
         return scoringLeft;
     }

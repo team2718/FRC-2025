@@ -9,6 +9,8 @@ import static edu.wpi.first.units.Units.Volts;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -23,113 +25,122 @@ public class ArmSubsystem extends SubsystemBase {
     private final ProfiledPIDController armVoltagePID;
     private final ArmFeedforward armFeedforward;
     private final SparkAbsoluteEncoder armAbsoluteEncoder;
-    
 
-public ArmSubsystem() {
-    armMotor = new SparkMax(Constants.ArmConstants.armMotorID, MotorType.kBrushless);
+    private final double intakePosition = 92.0; // intaking angle
+    private final double position90 = 85.0; // upright angle
+    private final double safeRaisingPosition = 80.0; // safe raising angle
 
-    SparkMaxConfig armConfig = new SparkMaxConfig();
-    AbsoluteEncoderConfig absoluteEncoderConfig = new AbsoluteEncoderConfig();
-    absoluteEncoderConfig.zeroCentered(true);
-    absoluteEncoderConfig.zeroOffset(0.0);
+    private boolean enabled = true; // used to enable/disable arm control
 
-    armConfig.idleMode(IdleMode.kBrake);
-    armConfig.smartCurrentLimit(20);
-    armConfig.inverted(true);
-    armConfig.absoluteEncoder.apply(absoluteEncoderConfig);
+    public ArmSubsystem() {
+        armMotor = new SparkMax(Constants.ArmConstants.armMotorID, MotorType.kBrushless);
 
-    armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        SparkMaxConfig armConfig = new SparkMaxConfig();
 
-    armFeedforward = new ArmFeedforward(0.165, 0.055, 0.13);
-    armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-        new TrapezoidProfile.Constraints(100, 100), 0.02);
+        armConfig.idleMode(IdleMode.kBrake);
+        armConfig.smartCurrentLimit(20);
+        armConfig.inverted(true);
 
-    armVoltagePID.setGoal(90);
-    armVoltagePID.setTolerance(3.5);
+        armConfig.absoluteEncoder.zeroCentered(true);
+        armConfig.absoluteEncoder.zeroOffset(0.260); // TODO: Switch to ~0.915 after also fixing getArmAngle()
 
+        armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
-    
-}
+        armFeedforward = new ArmFeedforward(0.165, 0.055, 0.14); // TODO: retune after post-MOSE redesign
+        armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
+                new TrapezoidProfile.Constraints(90, 90), 0.02);
 
+        armVoltagePID.setGoal(90);
+        armVoltagePID.setTolerance(Constants.ArmConstants.armPositionTolerance);
 
+        armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
 
-public void setArm (double speed) {
-    armMotor.set(speed);
-    
-}
-
-public void stopArm() {
-    armMotor.set(0);
-}
-
-public double getArmAngle() {
-    double degrees = (armAbsoluteEncoder.getPosition() - 0.67) * 360;
-    if (degrees < 0) {
-        degrees += 360;
     }
 
-    return degrees;
-}
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
-@Override
-public void periodic() {
-     updateArmLoop();
+    public double getArmAngle() {
+        double degrees = (armAbsoluteEncoder.getPosition() - 0.67) * 360; // TODO: Remove the 0.67 offset after fixing
+                                                                          // the encoder zeroing
+        if (degrees < 0) {
+            degrees += 360;
+        }
 
+        return degrees;
+    }
 
-    SmartDashboard.putNumber("Arm Position", getArmAngle());
-    SmartDashboard.putNumber("Arm Velocity", armAbsoluteEncoder.getVelocity() * 375 / 60);
-    SmartDashboard.putNumber("Desired Arm Position", armVoltagePID.getSetpoint().position);
-    SmartDashboard.putNumber("Desired Arm Velocity", armVoltagePID.getSetpoint().velocity);
+    @Override
+    public void periodic() {
+        if (enabled) {
+            updateArmLoop();
+        } else {
+            setVoltage(Volts.of(0));
+        }
 
-}
+        SmartDashboard.putNumber("Arm Position", getArmAngle());
+        SmartDashboard.putNumber("Arm Velocity", armAbsoluteEncoder.getVelocity() * 375 / 60);
+        SmartDashboard.putNumber("Desired Arm Position", armVoltagePID.getSetpoint().position);
+        SmartDashboard.putNumber("Desired Arm Velocity", armVoltagePID.getSetpoint().velocity);
 
-public void setArmTargetPosition(double position) {
-    armVoltagePID.setGoal(position);
-}
+    }
 
-public boolean atPosition() {
-    return armVoltagePID.atGoal();
-}
+    public void setArmTargetPosition(double position) {
+        armVoltagePID.setGoal(position);
+    }
 
-public boolean atPosition(double angle) {
-    return Math.abs(getArmAngle() - angle) < armVoltagePID.getPositionTolerance();
-}
+    public double getArmTargetPosition() {
+        return armVoltagePID.getGoal().position;
+    }
 
-public void setTo90() {
-    setArmTargetPosition(85);
-}
+    public boolean atPosition() {
+        return armVoltagePID.atGoal();
+    }
 
-public void setSafeRaising() {
-    setArmTargetPosition(75);
-}
+    public boolean atPosition(double angle) {
+        return Math.abs(getArmAngle() - angle) < armVoltagePID.getPositionTolerance();
+    }
 
-public boolean at90() {
-    return atPosition(85);
-}
+    public void setToIntake() {
+        setArmTargetPosition(intakePosition);
+    }
 
-public boolean atSafeRaising() {
-    return atPosition(75);
-}
+    public void setTo90() {
+        setArmTargetPosition(position90);
+    }
 
-public void resetProfilePID() {
-    armVoltagePID.reset(getArmAngle());
-}
+    public void setSafeRaising() {
+        setArmTargetPosition(safeRaisingPosition);
+    }
 
-public void updateArmLoop() {
-    double voltage = armVoltagePID.calculate(getArmAngle()) +  armFeedforward.calculate(armVoltagePID.getSetpoint().position, armVoltagePID.getSetpoint().velocity);
-    voltage = Math.max(-7, Math.min(7, voltage));
+    public boolean atIntake() {
+        return atPosition(intakePosition);
+    }
 
-    setVoltage(Volts.of(voltage));
+    public boolean at90() {
+        return atPosition(position90);
+    }
 
-}
+    public boolean atSafeRaising() {
+        return atPosition(safeRaisingPosition);
+    }
 
-public void setVoltage(Voltage volts) {
-    
+    public void resetProfilePID() {
+        armVoltagePID.reset(getArmAngle());
+    }
+
+    public void updateArmLoop() {
+        double voltage = armVoltagePID.calculate(getArmAngle())
+                + armFeedforward.calculate(armVoltagePID.getSetpoint().position, armVoltagePID.getSetpoint().velocity);
+        voltage = Math.max(-7, Math.min(7, voltage));
+
+        setVoltage(Volts.of(voltage));
+
+    }
+
+    public void setVoltage(Voltage volts) {
+
         armMotor.setVoltage(volts);
     }
 }
-
-
-
-

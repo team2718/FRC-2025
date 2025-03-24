@@ -1,8 +1,13 @@
 package frc.robot.commands.scoring;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
@@ -20,9 +25,9 @@ public class AutoScoringCommand extends Command {
     private final EndEffectorSubsystem effector;
     private final Vision vision;
 
-    private final PIDController xPID = new PIDController(3.0, 0.01, 0.0);
-    private final PIDController yPID = new PIDController(3.0, 0.01, 0.0);
-    private final PIDController thetaPID = new PIDController(0.15, 0.001, 0.0);
+    private final PIDController xPID = new PIDController(2.8, 0.0, 0.0);
+    private final PIDController yPID = new PIDController(2.8, 0.0, 0.0);
+    private final PIDController thetaPID = new PIDController(0.12, 0.0, 0.0);
 
     private boolean complete = false;
     private boolean autonomousFinished = false;
@@ -32,6 +37,9 @@ public class AutoScoringCommand extends Command {
     private double thetaDistance = 0.0;
 
     private Timer timer;
+
+    List<AprilTag> reefTags = new ArrayList<>();
+    int[] reefTagIDs = {6,7,8,9,10,11,  17,18,19,20,21,22};
 
     public AutoScoringCommand(SuperSystem supersystem, SwerveSubsystem swerve, ArmSubsystem arm, ElevatorSubsystem elevator, EndEffectorSubsystem effector, Vision vision) {
         this.supersystem = supersystem;
@@ -45,6 +53,14 @@ public class AutoScoringCommand extends Command {
         thetaPID.setTolerance(1.0);
 
         timer = new Timer();
+
+        for (AprilTag tag : Vision.fieldLayout.getTags()) {
+            for (int id : reefTagIDs) {
+                if (tag.ID == id) { // Reef tags
+                    reefTags.add(tag);
+                }
+            }
+        }
 
         addRequirements(supersystem, swerve, arm, elevator);
     }
@@ -69,35 +85,76 @@ public class AutoScoringCommand extends Command {
         timer.reset();
     }
 
+    private void runNoVision() {
+        AprilTag nearestTag = null;
+        double minDistance = Double.MAX_VALUE;
+        for (AprilTag tag : reefTags) {
+            double distance = swerve.getPose().getTranslation().getDistance(new Translation2d(tag.pose.getX(), tag.pose.getY()));
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestTag = tag;
+            }
+        }
+
+        // Once we're close enough, go ahead and bring up the arm
+        if (minDistance < Units.feetToMeters(5)) {
+            supersystem.setMoveAuto();
+        }
+
+        double targetXPosition = nearestTag.pose.getX() + 1.5 * Math.cos(nearestTag.pose.getRotation().getZ());
+        double targetYPosition = nearestTag.pose.getY() + 1.5 * Math.sin(nearestTag.pose.getRotation().getZ());
+        xDistance = swerve.getPose().getX() - targetXPosition;
+        yDistance = swerve.getPose().getY() - targetYPosition;
+        
+        double desiredRotation = nearestTag.pose.getRotation().getZ() * 180 / Math.PI + 90; // -90 because the scoring is on the robot's left side
+        // Wrap to -180 to 180
+        if (desiredRotation > 180) {
+            desiredRotation -= 360;
+        } else if (desiredRotation < -180) {
+            desiredRotation += 360;
+        }
+
+        double x = MathUtil.clamp(xPID.calculate(xDistance, 0.0), -1.0, 1.0);
+        double y = MathUtil.clamp(yPID.calculate(yDistance, 0.0), -1.0, 1.0);
+        double theta = MathUtil.clamp(thetaPID.calculate(swerve.getPose().getRotation().getDegrees(), desiredRotation), -3.0, 3.0);
+
+        swerve.drive(new Translation2d(x, y), theta, true);
+    }
+
     @Override
     public void execute() {
 
-        effector.setEndEffector(0);
+        effector.setHold();
+
+        // If we can't see a good april tag, just drive to the nearest reef face
+        if (!vision.visionCanSeeTarget()) {
+            supersystem.setIntake();
+            runNoVision();
+            return;
+        }
+
+        xDistance = vision.getVisionY();
+        yDistance = -vision.getVisionX();
+        thetaDistance = vision.getVisionTheta();
 
         double ySetpoint = Constants.AutoAlignConstants.leftBranchToCamera;
         if (!supersystem.isScoringLeft()) {
             ySetpoint += Constants.AutoAlignConstants.distanceBetweenBranches; // Distance between branches
         }
 
-        // Note: X and Y are swapped because the camera is mounted perpendicular to the robot's forward direction
-        xDistance = vision.getVisionY();
-        yDistance = -vision.getVisionX();
-        thetaDistance = vision.getVisionTheta();
-
-        double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -0.5, 0.5);
-        double y = MathUtil.clamp(yPID.calculate(yDistance, -Constants.AutoAlignConstants.reefWallToCamera), -0.5, 0.5);
-        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -0.4, 0.4);
+        double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -1.0, 1.0);
+        double y = MathUtil.clamp(yPID.calculate(yDistance, -supersystem.getScoringPosition().getReefDistance()), -1.0, 1.0);
+        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -0.8, 0.8);
 
         if (complete || (xPID.atSetpoint() && yPID.atSetpoint() && thetaPID.atSetpoint())) {
             supersystem.setScoring();
 
-            if (complete || (arm.atPosition() && arm.getArmAngle() < 60)) {
+            // The scoring is "complete" when the arm is at a scoring position
+            // (use <70 degrees as a rough way to determine if the arm is in a scoring position)
+            if (complete || (arm.atPosition() && arm.getArmTargetPosition() < 70)) {
                 complete = true;
                 timer.start();
-                y = -0.8;
-                x = 0;
-                theta = 0;
-                effector.setEndEffector(-0.1);
+                effector.setScore();
             }
         } else {
             supersystem.setMoveAuto();
@@ -109,7 +166,7 @@ public class AutoScoringCommand extends Command {
     @Override
     public void end(boolean interuppted) {
         supersystem.setIntake();
-        effector.setEndEffector(0);
+        effector.setHold();
         swerve.drive(new Translation2d(0, 0), 0, false);
         timer.stop();
         timer.reset();
@@ -117,11 +174,11 @@ public class AutoScoringCommand extends Command {
 
     @Override
     public boolean isFinished() {
-        if (autonomousFinished) {
-            return (complete && timer.get() > 1.0); // Complete the routine once the robot has scored and moved away
-        } else {
-            return false;
-        }
+        // if (autonomousFinished) {
+        return (complete && timer.get() > 0.7); // Complete the routine once the robot has scored and moved away
+        // } else {
+        //     return false;
+        // }
     }
 
 }

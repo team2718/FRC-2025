@@ -4,8 +4,11 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,13 +25,15 @@ import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.endeffector.EndEffectorSubsystem;
 import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.SuperSystem.ScoringPositions;
-import frc.robot.commands.intake.*;
 import frc.robot.commands.climber.ClimberCommand;
 import frc.robot.commands.elevator.SSElevatorCommand;
-import frc.robot.commands.endeffector.*;
+import frc.robot.commands.scoring.AutoFeedCommand;
 import frc.robot.commands.scoring.AutoScoringCommand;
+import frc.robot.commands.scoring.AutonomousWaitForFeed;
 import frc.robot.commands.scoring.ScoringCommand;
 import java.io.File;
+
+import javax.security.auth.callback.NameCallback;
 
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -45,8 +50,7 @@ import swervelib.SwerveInputStream;
 public class RobotContainer {
 
   private final CommandXboxController driverXbox = new CommandXboxController(0);
-  private final CommandXboxController secondXbox = new
-  CommandXboxController(1);
+  private final CommandXboxController secondXbox = new CommandXboxController(1);
 
   private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
       "swerve"));
@@ -107,6 +111,12 @@ public class RobotContainer {
 
   private int position = 4;
 
+  private boolean elevatorEnabled = true;
+  private boolean armEnabled = true;
+  private boolean driveEnabled = true;
+  private boolean endeffectorEnabled = true;
+  private boolean allEnabled = true;
+
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
@@ -115,6 +125,13 @@ public class RobotContainer {
 
     NamedCommands.registerCommand("AutoScore",
         new AutoScoringCommand(supersystem, drivebase, arm, elevator, endeffector, vision).auto());
+
+    NamedCommands.registerCommand("WaitForFeed",
+        new AutonomousWaitForFeed(supersystem, endeffector));
+
+    NamedCommands.registerCommand("RaiseElevator", Commands.runOnce(() -> {
+      supersystem.setMoveAuto();
+    }, supersystem));
 
     ScoringPositions[] positions = { ScoringPositions.L1, ScoringPositions.L2, ScoringPositions.L3,
         ScoringPositions.L4 };
@@ -139,10 +156,17 @@ public class RobotContainer {
     autoChooser.addOption("Preload Proc", "Preload Proc");
     autoChooser.addOption("Preload Middle", "Preload Middle");
     autoChooser.addOption("Preload NonProc", "Preload NonProc");
+    autoChooser.addOption("NonProc 2 Piece", "NonProc 2 Piece");
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     matchTimer.reset();
+
+    // Start match time on autonomous start
+    RobotModeTriggers.autonomous().onTrue(Commands.runOnce(() -> {
+      matchTimer.reset();
+      matchTimer.start();
+    }));
 
     // Start match time on teleop start
     RobotModeTriggers.teleop().onTrue(Commands.runOnce(() -> {
@@ -152,6 +176,7 @@ public class RobotContainer {
 
     // Stop match time on end of match
     RobotModeTriggers.disabled().onTrue(Commands.runOnce(() -> {
+      matchTimer.reset();
       matchTimer.stop();
     }));
 
@@ -163,29 +188,27 @@ public class RobotContainer {
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
-    driverXbox.leftTrigger()
-        .whileTrue(new IntakeCommand(intake, 0.45)
-        .alongWith(new EndEffectorCommand(endeffector, 0.9))
-        .alongWith(Commands.runOnce(() -> elevator.resetProfilePID())));
-    driverXbox.leftBumper()
-        .whileTrue(new IntakeCommand(intake, -0.5).alongWith(new EndEffectorCommand(endeffector, -0.15)));
+    driverXbox.leftTrigger().whileTrue(
+        new AutoFeedCommand(supersystem, drivebase, arm, elevator, endeffector, vision, driveAngularVelocity));
+    driverXbox.leftBumper().whileTrue(Commands.runEnd(() -> {
+      endeffector.setOuttake();
+    }, () -> {
+      endeffector.setHold();
+    }, endeffector));
 
-      driverXbox.b()
-        .whileTrue(new EndEffectorCommand(endeffector, -0.5));
+    driverXbox.b().whileTrue(Commands.runEnd(() -> {
+      endeffector.setDealgify();
+    }, () -> {
+      endeffector.setHold();
+    }, endeffector));
 
     driverXbox.rightTrigger().whileTrue(autoScore);
     driverXbox.rightBumper().whileTrue(score);
 
-   // driverXbox.start().whileTrue(climbin);
-   // driverXbox.back().whileTrue(climbout);
+    // driverXbox.start().whileTrue(climbin);
+    // driverXbox.back().whileTrue(climbout);
 
-    //driverXbox.povUp().onTrue(Commands.runOnce(() -> adjPosition(1))).debounce(0.4);
-    //driverXbox.povDown().onTrue(Commands.runOnce(() -> adjPosition(-1))).debounce(0.4);
-
-   // driverXbox.povRight().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
-   // driverXbox.povLeft().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
-
-    // sets scoring positions 
+    // sets scoring positions
     secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
     secondXbox.rightBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
 
@@ -194,17 +217,91 @@ public class RobotContainer {
     secondXbox.b().whileTrue(elevatorL2Command);
     secondXbox.a().whileTrue(elevatorL1Command);
 
-    //secondXbox.rightBumper().whileTrue(climbin.alongWith(Commands.runOnce(supersystem::setClimbState)));
-    //secondXbox.leftBumper().whileTrue(climbout.alongWith(Commands.runOnce(supersystem::setClimbState)));
+    // secondXbox.rightBumper().whileTrue(climbin.alongWith(Commands.runOnce(supersystem::setClimbState)));
+    // secondXbox.leftBumper().whileTrue(climbout.alongWith(Commands.runOnce(supersystem::setClimbState)));
+  }
 
-    elevator.resetPosition();
+  private int stateToButtonBox() {
+    int[] buttonBoxLEDs = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    switch (supersystem.getScoringPosition()) {
+      case L1:
+        buttonBoxLEDs[0] = 1;
+        break;
+      case L2:
+        buttonBoxLEDs[1] = 1;
+        break;
+      case L3:
+        buttonBoxLEDs[2] = 1;
+        break;
+      case L4:
+        buttonBoxLEDs[3] = 1;
+        break;
+    }
+
+    if (supersystem.isScoringLeft()) {
+      buttonBoxLEDs[4] = 1;
+      buttonBoxLEDs[5] = 1;
+    } else {
+      buttonBoxLEDs[6] = 1;
+      buttonBoxLEDs[7] = 1;
+    }
+
+    return buttonBoxLEDs[0] * 1 + buttonBoxLEDs[1] * 2 + buttonBoxLEDs[2] * 4 + buttonBoxLEDs[3] * 8
+        + buttonBoxLEDs[4] * 16
+        + buttonBoxLEDs[5] * 32 + buttonBoxLEDs[6] * 64 + buttonBoxLEDs[7] * 128;
   }
 
   public void periodic() {
-    SmartDashboard.putNumber("Match Time", (2 * 60 + 15) - matchTimer.get());
+    secondXbox.setRumble(RumbleType.kBothRumble, stateToButtonBox() / 255.0);
+    // secondXbox.setRumble(RumbleType.kRightRumble, 1); // Set it to anything to
+    // let the button box know it's a "real" command
+
+    int leftTrigger = (int) (secondXbox.getHID().getLeftTriggerAxis() * 32);
+
+    elevatorEnabled = (leftTrigger & 0b1) == 0;
+    armEnabled = (leftTrigger & 0b10) == 0;
+    driveEnabled = (leftTrigger & 0b100) == 0;
+    endeffectorEnabled = (leftTrigger & 0b1000) == 0;
+    allEnabled = (leftTrigger & 0b10000) == 0;
+
+    if (!allEnabled) {
+      elevatorEnabled = false;
+      armEnabled = false;
+      driveEnabled = false;
+      endeffectorEnabled = false;
+    }
+
+    SmartDashboard.putBoolean("Enabled/Elevator", elevatorEnabled);
+    SmartDashboard.putBoolean("Enabled/Arm", armEnabled);
+    SmartDashboard.putBoolean("Enabled/Drive", driveEnabled);
+    SmartDashboard.putBoolean("Enabled/EndEffector", endeffectorEnabled);
+    SmartDashboard.putBoolean("Enabled/All", allEnabled);
+
+    SmartDashboard.putBoolean("Vision Can See Target", vision.visionCanSeeTarget());
+
+    elevator.setEnabled(elevatorEnabled);
+    arm.setEnabled(armEnabled);
+    drivebase.setEnabled(driveEnabled);
+    endeffector.setEnabled(endeffectorEnabled);
+
+    supersystem.setDialPosition(secondXbox.getHID().getRightTriggerAxis());
+
+    if (secondXbox.getHID().getLeftBumperButton() || secondXbox.getHID().getRightBumperButton()) {
+      supersystem.setDialContrlArm(true);
+    } else {
+      supersystem.setDialContrlArm(false);
+    }
+
+    if (DriverStation.isAutonomous()) {
+      SmartDashboard.putNumber("Match Time", (15) - matchTimer.get());
+    }
+
+    if (DriverStation.isTeleop()) {
+      SmartDashboard.putNumber("Match Time", (2 * 60 + 15) - matchTimer.get());
+    }
+
     updateOdometry();
-    
-    
   }
 
   private void adjPosition(int change) {
@@ -231,7 +328,6 @@ public class RobotContainer {
         break;
     }
 
-    elevator.resetProfilePID();
     arm.resetProfilePID();
   }
 
@@ -248,7 +344,6 @@ public class RobotContainer {
   }
 
   public void resetProfilePIDs() {
-    elevator.resetProfilePID();
     arm.resetProfilePID();
   }
 }

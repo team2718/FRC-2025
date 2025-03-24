@@ -41,8 +41,8 @@ public final class Constants {
 
   public static class OperatorConstants {
 
-    public static final double SPEED_MULTIPLIER = 0.6;
-    public static final double ROTATION_MULTIPLIER = 0.6;
+    public static final double SPEED_MULTIPLIER = 0.5;
+    public static final double ROTATION_MULTIPLIER = 0.5;
     public static final double DEADBAND = 0.3;
   }
 
@@ -54,6 +54,7 @@ public final class Constants {
 
   public static final class ArmConstants {
     public static final int armMotorID = 13;
+    public static final double armPositionTolerance = 3.0;
   }
 
   public static final class EndEffectorConstants {
@@ -63,7 +64,7 @@ public final class Constants {
   public static final class ElevatorConstants {
     public static final int elevatormotor1ID = 11;
     public static final int elevatormotor2ID = 12;
-    public static final double elevatorTolerance = 2;
+    public static final double elevatorPositionTolerance = 2;
 
   }
 
@@ -72,8 +73,8 @@ public final class Constants {
   }
 
   public static final class AutoAlignConstants {
-    public static final double leftBranchToCamera = -0.05; // meters
-    public static final double distanceBetweenBranches = Units.inchesToMeters(12.94);
-    public static final double reefWallToCamera = 0.82; // meters
+    public static final double leftBranchToCamera = Units.inchesToMeters(-1); // meters
+    public static final double distanceBetweenBranches = Units.inchesToMeters(14);
+    public static final double reefWallToCamera = 0.75; // meters
   }
 }

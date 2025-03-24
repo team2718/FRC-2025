@@ -1,0 +1,74 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "L4-Right"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RaiseElevator"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Score NonProc Path"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoScore"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "NonProc Get Coral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "WaitForFeed"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RaiseElevator"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NonProc Score Nearest"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoScore"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
