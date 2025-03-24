@@ -1,6 +1,8 @@
 package frc.robot.subsystems.endeffector;
 
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -36,6 +38,9 @@ public class EndEffectorSubsystem extends SubsystemBase {
 
     private double senseTime = 0.0;
 
+
+    Alert endEffectorAlert;
+    
     public EndEffectorSubsystem() {
         timer = new Timer();
         endeffectormotor1 = new SparkMax(Constants.EndEffectorConstants.endeffectormotor1ID, MotorType.kBrushless);
@@ -44,6 +49,8 @@ public class EndEffectorSubsystem extends SubsystemBase {
         endeffectorConfig.inverted(true);
         endeffectorConfig.smartCurrentLimit(25);
         endeffectormotor1.configure(endeffectorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    
+        endEffectorAlert = new Alert("Motor \"" + "End Effector" + "\" is not connected!", AlertType.kError);
     }
 
     public void setEnabled(boolean enabled) {
@@ -130,4 +137,15 @@ public class EndEffectorSubsystem extends SubsystemBase {
     public void setDealgify() {
         currentState = State.DEALGIFY;
     }
+    // alerts us if the end effector motor is not detected
+    public Alert setEndEffectorAlert() {
+        if (endeffectormotor1.getBusVoltage() > 0) {
+            endEffectorAlert.set(false); 
+        } else {
+            endEffectorAlert.set(true);
+        }
+        
+        return endEffectorAlert;
+    }
+
 }

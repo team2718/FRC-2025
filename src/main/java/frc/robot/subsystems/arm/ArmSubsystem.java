@@ -12,6 +12,9 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
+
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -25,6 +28,8 @@ public class ArmSubsystem extends SubsystemBase {
     private final ProfiledPIDController armVoltagePID;
     private final ArmFeedforward armFeedforward;
     private final SparkAbsoluteEncoder armAbsoluteEncoder;
+
+    Alert armMotorAlert;
 
     private final double intakePosition = 92.0; // intaking angle
     private final double position90 = 85.0; // upright angle
@@ -49,12 +54,12 @@ public class ArmSubsystem extends SubsystemBase {
         armFeedforward = new ArmFeedforward(0.165, 0.055, 0.14); // TODO: retune after post-MOSE redesign
         armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
                 new TrapezoidProfile.Constraints(90, 90), 0.02);
+        armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
+
+        armMotorAlert = new Alert("Motor \"" + "Arm Motor" + "\" is not connected!", AlertType.kError);
 
         armVoltagePID.setGoal(90);
         armVoltagePID.setTolerance(Constants.ArmConstants.armPositionTolerance);
-
-        armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
-
     }
 
     public void setEnabled(boolean enabled) {
@@ -142,5 +147,16 @@ public class ArmSubsystem extends SubsystemBase {
     public void setVoltage(Voltage volts) {
 
         armMotor.setVoltage(volts);
+    }
+
+    // alerts us if the arm motor is not detected
+    public Alert setArmMotorAlert() {
+        if (armMotor.getBusVoltage() > 0) {
+            armMotorAlert.set(false);
+        } else {
+            armMotorAlert.set(true);
+        }
+
+        return armMotorAlert;
     }
 }

@@ -1,6 +1,8 @@
 
 package frc.robot.subsystems.elevator;
 
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -39,6 +41,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private boolean enabled = true; // used to enable/disable elevator control
 
+    Alert elevatorMotor1Alert;
+    Alert elevatorMotor2Alert;
+
     public ElevatorSubsystem() {
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
@@ -63,6 +68,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         // elevatormotor1.setControl(new MotionMagicVoltage));
         elevatormotor2.setControl(new Follower(Constants.ElevatorConstants.elevatormotor1ID, false));
+
+        elevatorMotor1Alert = new Alert("Motor \"" + "elevatorMotor1" + "\" is not connected!", AlertType.kError);
+        elevatorMotor2Alert = new Alert("Motor \"" + "elevatorMotor2" + "\" is not connected!", AlertType.kError);
     }
 
     public void setEnabled(boolean enabled) {
@@ -104,6 +112,28 @@ public class ElevatorSubsystem extends SubsystemBase {
     public void setVoltage(Voltage volts) {
         elevatormotor1.setVoltage(volts.in(Volts));
         elevatormotor2.setVoltage(volts.in(Volts));
+    }
+
+    // alerts us if the 1st elevator motor is not detected
+    public Alert setElevatorMotor1Alert() {
+        if (elevatormotor1.isConnected()) {
+            elevatorMotor1Alert.set(false); 
+        } else {
+            elevatorMotor1Alert.set(true);
+        }
+        
+        return elevatorMotor1Alert;
+    }
+    
+    // alerts us if the 2nd elevator motor is not detected
+    public Alert setElevatorMotor2Alert() {
+        if (elevatormotor2.isConnected()) {
+            elevatorMotor2Alert.set(false); 
+        } else {
+            elevatorMotor2Alert.set(true);
+        }
+        
+        return elevatorMotor2Alert;
     }
 
 }
