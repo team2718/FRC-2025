@@ -17,10 +17,10 @@ public class SuperSystem extends SubsystemBase {
 
     public enum ScoringPositions {
         
-        L1(2.0, 58.8, 0.75),
-        L2(3.0, 55.3, 0.75),
-        L3(12.0, 50.3, 0.75),
-        L4(27.33, 44.4, 0.83);
+        L1(2.0, 60, 0.75),
+        L2(3.0, 60, 0.75),
+        L3(11.5, 55, 0.75),
+        L4(27.0, 50, 0.85);
 
         
         private double elevator_position;
@@ -116,27 +116,32 @@ public class SuperSystem extends SubsystemBase {
                 arm.setToIntake();
             }
 
-            if (arm.atIntake() || arm.at90()) {
-                elevator.setTargetPosition(0.05);
-            }
+            // Safe - wait for the arm to be in position before moving the elevator
+            // if (arm.atIntake() || arm.at90()) {
+            //     elevator.setTargetPosition(0.05);
+            // }
+
+            // YOLO - just go straight down without worrying about getting the arm in position.
+            // we don't have time to wait, we only have time to win
+            elevator.setTargetPosition(0.05);
         } else if (state == SuperStates.SCORE_CORAL || state == SuperStates.ELEVATOR_ONLY) {
             // if the elevator is at the wrong position, bring the arm in first
-            if (!arm.atSafeRaising() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+            if (!arm.safeToRaiseElevator() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
                 arm.setSafeRaising();
             }
 
             // If the arm is upright, then we can move the elevator
-            else if (arm.atSafeRaising() && !elevator.atPosition(scoringPosition.getElevatorPosition())) {
+            else if (arm.safeToRaiseElevator()) {
                 elevator.setTargetPosition(scoringPosition.getElevatorPosition());
             }
 
             // Finally, if the elevator is at the right spot, we can score
-            else if (state != SuperStates.ELEVATOR_ONLY && elevator.atPosition(scoringPosition.getElevatorPosition())) {
+            if (state != SuperStates.ELEVATOR_ONLY && elevator.atPosition(scoringPosition.getElevatorPosition())) {
                 arm.setArmTargetPosition(scoringPosition.getArmAngle());
             }
         }  else if (state == SuperStates.CLIMB) {
-            arm.setArmTargetPosition(32);
-            elevator.setTargetPosition(2);
+            arm.setArmTargetPosition(60);
+            elevator.setTargetPosition(0.05);
         } 
     }
 

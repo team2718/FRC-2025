@@ -25,9 +25,9 @@ public class AutoScoringCommand extends Command {
     private final EndEffectorSubsystem effector;
     private final Vision vision;
 
-    private final PIDController xPID = new PIDController(2.8, 0.0, 0.0);
-    private final PIDController yPID = new PIDController(2.8, 0.0, 0.0);
-    private final PIDController thetaPID = new PIDController(0.12, 0.0, 0.0);
+    private final PIDController xPID = new PIDController(2.0, 0.0, 0.0);
+    private final PIDController yPID = new PIDController(2.0, 0.0, 0.0);
+    private final PIDController thetaPID = new PIDController(0.09, 0.0, 0.0);
 
     private boolean complete = false;
     private boolean autonomousFinished = false;
@@ -101,8 +101,8 @@ public class AutoScoringCommand extends Command {
             supersystem.setMoveAuto();
         }
 
-        double targetXPosition = nearestTag.pose.getX() + 1.5 * Math.cos(nearestTag.pose.getRotation().getZ());
-        double targetYPosition = nearestTag.pose.getY() + 1.5 * Math.sin(nearestTag.pose.getRotation().getZ());
+        double targetXPosition = nearestTag.pose.getX() + 1.2 * Math.cos(nearestTag.pose.getRotation().getZ());
+        double targetYPosition = nearestTag.pose.getY() + 1.2 * Math.sin(nearestTag.pose.getRotation().getZ());
         xDistance = swerve.getPose().getX() - targetXPosition;
         yDistance = swerve.getPose().getY() - targetYPosition;
         
@@ -116,7 +116,7 @@ public class AutoScoringCommand extends Command {
 
         double x = MathUtil.clamp(xPID.calculate(xDistance, 0.0), -1.0, 1.0);
         double y = MathUtil.clamp(yPID.calculate(yDistance, 0.0), -1.0, 1.0);
-        double theta = MathUtil.clamp(thetaPID.calculate(swerve.getPose().getRotation().getDegrees(), desiredRotation), -3.0, 3.0);
+        double theta = MathUtil.clamp(thetaPID.calculate(swerve.getPose().getRotation().getDegrees(), desiredRotation), -2.5, 2.5);
 
         swerve.drive(new Translation2d(x, y), theta, true);
     }
@@ -144,14 +144,13 @@ public class AutoScoringCommand extends Command {
 
         double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -1.0, 1.0);
         double y = MathUtil.clamp(yPID.calculate(yDistance, -supersystem.getScoringPosition().getReefDistance()), -1.0, 1.0);
-        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -0.8, 0.8);
+        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -1.0, 1.0);
 
         if (complete || (xPID.atSetpoint() && yPID.atSetpoint() && thetaPID.atSetpoint())) {
             supersystem.setScoring();
 
             // The scoring is "complete" when the arm is at a scoring position
-            // (use <70 degrees as a rough way to determine if the arm is in a scoring position)
-            if (complete || (arm.atPosition() && arm.getArmTargetPosition() < 70)) {
+            if (complete || (arm.atPosition() && arm.getArmTargetPosition() < (arm.safeRaisingPosition - 5))) {
                 complete = true;
                 timer.start();
                 effector.setScore();

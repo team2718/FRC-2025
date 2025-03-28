@@ -48,17 +48,16 @@ public class ElevatorSubsystem extends SubsystemBase {
         talon_config.CurrentLimits.StatorCurrentLimit = 40;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         talon_config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        talon_config.Slot0.kG = 0.5; // TODO: retune after post-MOSE redesign
-        talon_config.Slot0.kS = 0.11; // TODO: retune after post-MOSE redesign
+        talon_config.Slot0.kG = 0.455;
+        talon_config.Slot0.kS = 0.245;
         talon_config.Slot0.kV = 0.131;
         talon_config.Slot0.kA = 0.0011;
         talon_config.Slot0.kP = 1.8;
         talon_config.Slot0.kI = 0.0;
         talon_config.Slot0.kD = 0.0;
         talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
-        talon_config.MotionMagic.MotionMagicCruiseVelocity = 50;
-        talon_config.MotionMagic.MotionMagicAcceleration = 75;
-        talon_config.MotionMagic.MotionMagicJerk = 2000;
+        talon_config.MotionMagic.MotionMagicCruiseVelocity = 60;
+        talon_config.MotionMagic.MotionMagicAcceleration = 85;
 
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);

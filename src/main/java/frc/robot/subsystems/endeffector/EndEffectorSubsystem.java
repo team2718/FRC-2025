@@ -9,6 +9,11 @@ import frc.robot.Constants;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+
+import au.grapplerobotics.ConfigurationFailedException;
+import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.interfaces.LaserCanInterface.Measurement;
+
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -21,6 +26,8 @@ public class EndEffectorSubsystem extends SubsystemBase {
     private boolean hasCoral = false;
     private boolean enabled = true;
 
+    private final LaserCan lc = new LaserCan(47);
+
     private enum State {
         HOLD,
         INTAKE,
@@ -31,16 +38,15 @@ public class EndEffectorSubsystem extends SubsystemBase {
 
     private State currentState = State.HOLD;
 
-    private final double senseCurrent = 14.0; // Current reached when a coral has been intook
+    private final double senseCurrent = 19.0; // Current reached when a coral has been intook
     private final double senseDelay = 0.2; // Seconds after starting intaking to start sensing (to avoid motor start
                                            // spike)
     private final double extraIntakeTimer = 0.2; // Seconds to continue intaking after detecting coral
 
     private double senseTime = 0.0;
 
-
     Alert endEffectorAlert;
-    
+
     public EndEffectorSubsystem() {
         timer = new Timer();
         endeffectormotor1 = new SparkMax(Constants.EndEffectorConstants.endeffectormotor1ID, MotorType.kBrushless);
@@ -49,8 +55,16 @@ public class EndEffectorSubsystem extends SubsystemBase {
         endeffectorConfig.inverted(true);
         endeffectorConfig.smartCurrentLimit(25);
         endeffectormotor1.configure(endeffectorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    
+
         endEffectorAlert = new Alert("Motor \"" + "End Effector" + "\" is not connected!", AlertType.kError);
+
+        try {
+            lc.setRangingMode(LaserCan.RangingMode.SHORT);
+            lc.setRegionOfInterest(new LaserCan.RegionOfInterest(8, 8, 16, 16));
+            lc.setTimingBudget(LaserCan.TimingBudget.TIMING_BUDGET_33MS);
+        } catch (ConfigurationFailedException e) {
+            System.out.println("Configuration failed! " + e);
+        }
     }
 
     public void setEnabled(boolean enabled) {
@@ -60,22 +74,20 @@ public class EndEffectorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
 
-        // Set hasCoral if we are intaking, we are past the startup period, and we have
-        // more current than normal
-        if (currentState == State.INTAKE && !tempHasCoral && !hasCoral && timer.hasElapsed(senseDelay)
-                && endeffectormotor1.getOutputCurrent() > senseCurrent) {
-            tempHasCoral = true;
-            senseTime = timer.get();
+        if (!enabled) {
+            endeffectormotor1.set(0);
+            return;
         }
 
-        if (tempHasCoral && timer.get() - senseTime > extraIntakeTimer) { // If we have coral for more than 0.2 seconds,
-                                                                          // stop intaking
-            if (endeffectormotor1.getOutputCurrent() < senseCurrent) {
-                tempHasCoral = false;
-            } else {
-                hasCoral = true;
-                setHold();
-            }
+        Measurement laser_measurement = lc.getMeasurement();
+        if (laser_measurement != null) {
+            hasCoral = laser_measurement.distance_mm < 10;
+        } else {
+            hasCoral = false;
+        }
+
+        if (currentState == State.INTAKE && hasCoral) {
+            currentState = State.HOLD;
         }
 
         switch (currentState) {
@@ -83,10 +95,10 @@ public class EndEffectorSubsystem extends SubsystemBase {
                 endeffectormotor1.set(0);
                 break;
             case INTAKE, SCORE:
-                endeffectormotor1.set(0.3);
+                endeffectormotor1.set(0.4);
                 break;
             case OUTTAKE:
-                endeffectormotor1.set(-0.3);
+                endeffectormotor1.set(-0.5);
                 break;
             case DEALGIFY:
                 endeffectormotor1.set(0.7);
@@ -137,14 +149,15 @@ public class EndEffectorSubsystem extends SubsystemBase {
     public void setDealgify() {
         currentState = State.DEALGIFY;
     }
+
     // alerts us if the end effector motor is not detected
     public Alert setEndEffectorAlert() {
         if (endeffectormotor1.getBusVoltage() > 0) {
-            endEffectorAlert.set(false); 
+            endEffectorAlert.set(false);
         } else {
             endEffectorAlert.set(true);
         }
-        
+
         return endEffectorAlert;
     }
 

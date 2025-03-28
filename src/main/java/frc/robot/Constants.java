@@ -64,7 +64,7 @@ public final class Constants {
 
   public static final class ArmConstants {
     public static final int armMotorID = 13;
-    public static final double armPositionTolerance = 3.0;
+    public static final double armPositionTolerance = 7.0;
   }
 
 
@@ -76,14 +76,15 @@ public final class Constants {
   public static final class ElevatorConstants {
     public static final int elevatormotor1ID = 11;
     public static final int elevatormotor2ID = 12;
-    public static final double elevatorPositionTolerance = 2;
+    public static final double elevatorPositionTolerance = 4;
 
 
   }
 
 
   public static final class ClimberConstants {
-    public static final int climbermotorID = 15;
+    public static final int winchmotorID = 15;
+    public static final int climberengagemotorID = 17;
   }
 
 

@@ -83,6 +83,49 @@
               }
             ]
           }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4-Left"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RaiseElevator"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NonProc Score Nearest"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoScore"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Nearest To Feed"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "WaitForFeed"
+                }
+              }
+            ]
+          }
         }
       ]
     }

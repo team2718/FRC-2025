@@ -31,9 +31,9 @@ public class ArmSubsystem extends SubsystemBase {
 
     Alert armMotorAlert;
 
-    private final double intakePosition = 92.0; // intaking angle
-    private final double position90 = 85.0; // upright angle
-    private final double safeRaisingPosition = 80.0; // safe raising angle
+    public final double intakePosition = 90.5; // intaking angle
+    public final double position90 = 85.0; // upright angle
+    public final double safeRaisingPosition = 75.0; // safe raising angle
 
     private boolean enabled = true; // used to enable/disable arm control
 
@@ -47,13 +47,13 @@ public class ArmSubsystem extends SubsystemBase {
         armConfig.inverted(true);
 
         armConfig.absoluteEncoder.zeroCentered(true);
-        armConfig.absoluteEncoder.zeroOffset(0.260); // TODO: Switch to ~0.915 after also fixing getArmAngle()
+        armConfig.absoluteEncoder.zeroOffset(0.93);
 
         armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        armFeedforward = new ArmFeedforward(0.165, 0.055, 0.14); // TODO: retune after post-MOSE redesign
+        armFeedforward = new ArmFeedforward(0.14, 0.24, 0.14);
         armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-                new TrapezoidProfile.Constraints(90, 90), 0.02);
+                new TrapezoidProfile.Constraints(150, 200), 0.02);
         armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
 
         armMotorAlert = new Alert("Motor \"" + "Arm Motor" + "\" is not connected!", AlertType.kError);
@@ -67,7 +67,7 @@ public class ArmSubsystem extends SubsystemBase {
     }
 
     public double getArmAngle() {
-        double degrees = (armAbsoluteEncoder.getPosition() - 0.67) * 360; // TODO: Remove the 0.67 offset after fixing
+        double degrees = (armAbsoluteEncoder.getPosition()) * 360; // TODO: Remove the 0.67 offset after fixing
                                                                           // the encoder zeroing
         if (degrees < 0) {
             degrees += 360;
@@ -127,8 +127,8 @@ public class ArmSubsystem extends SubsystemBase {
         return atPosition(position90);
     }
 
-    public boolean atSafeRaising() {
-        return atPosition(safeRaisingPosition);
+    public boolean safeToRaiseElevator() {
+        return getArmAngle() > (safeRaisingPosition - Constants.ArmConstants.armPositionTolerance);
     }
 
     public void resetProfilePID() {

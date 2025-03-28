@@ -19,15 +19,15 @@ public void initialize() {
     
 }
 
-@Override 
-public void execute() {
-    climber.setClimber(speed);
-}
+// @Override 
+// public void execute() {
+//     climber.setClimber(speed);
+// }
 
-@Override 
-public void end(boolean interuppted) {
-    climber.setClimber(0);
-}
+// @Override 
+// public void end(boolean interuppted) {
+//     climber.setClimber(0);
+// }
 
 @Override 
 public boolean isFinished() {

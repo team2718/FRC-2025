@@ -178,6 +178,7 @@ public class RobotContainer {
     autoChooser.addOption("Preload Middle", "Preload Middle");
     autoChooser.addOption("Preload NonProc", "Preload NonProc");
     autoChooser.addOption("NonProc 2 Piece", "NonProc 2 Piece");
+    autoChooser.addOption("NonProc 3 Piece", "NonProc 3 Piece");
 
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
@@ -217,6 +218,7 @@ public class RobotContainer {
 
     driverXbox.leftTrigger().whileTrue(
         new AutoFeedCommand(supersystem, drivebase, arm, elevator, endeffector, vision, driveAngularVelocity));
+
     driverXbox.leftBumper().whileTrue(Commands.runEnd(() -> {
       endeffector.setOuttake();
     }, () -> {
@@ -229,12 +231,18 @@ public class RobotContainer {
       endeffector.setHold();
     }, endeffector));
 
+    driverXbox.x().whileTrue(Commands.runEnd(() -> {
+      endeffector.setIntake();
+    }, () -> {
+      endeffector.setHold();
+    }, endeffector));
 
     driverXbox.rightTrigger().whileTrue(autoScore);
     driverXbox.rightBumper().whileTrue(score);
 
-    // driverXbox.start().whileTrue(climbin);
-    // driverXbox.back().whileTrue(climbout);
+    driverXbox.start().whileTrue(Commands.runEnd(() -> {climber.setEngageMotor(8.0); supersystem.setClimbState();}, () -> {climber.setEngageMotor(0.0);}, climber, arm, elevator, supersystem));
+    driverXbox.back().whileTrue(Commands.runEnd(() -> {climber.setWinchMotor(8.0); supersystem.setClimbState();}, () -> {climber.setWinchMotor(0.0);}, climber, arm, elevator, supersystem));
+    driverXbox.y().whileTrue(Commands.runEnd(() -> {climber.setWinchMotor(-8.0);}, () -> {climber.setWinchMotor(0.0);}, climber, arm, elevator, supersystem));
 
     // sets scoring positions
     secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
