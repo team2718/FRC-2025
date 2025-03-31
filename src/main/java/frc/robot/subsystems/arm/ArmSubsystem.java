@@ -2,15 +2,12 @@ package frc.robot.subsystems.arm;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.NeutralOut;
 import com.revrobotics.spark.SparkAbsoluteEncoder;
 
 import edu.wpi.first.wpilibj.Alert;
@@ -31,7 +28,7 @@ public class ArmSubsystem extends SubsystemBase {
 
     Alert armMotorAlert;
 
-    public final double intakePosition = 90.5; // intaking angle
+    public final double intakePosition = 91.0; // intaking angle
     public final double position90 = 85.0; // upright angle
     public final double safeRaisingPosition = 75.0; // safe raising angle
 
@@ -47,7 +44,7 @@ public class ArmSubsystem extends SubsystemBase {
         armConfig.inverted(true);
 
         armConfig.absoluteEncoder.zeroCentered(true);
-        armConfig.absoluteEncoder.zeroOffset(0.93);
+        armConfig.absoluteEncoder.zeroOffset(0.925);
 
         armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -56,7 +53,7 @@ public class ArmSubsystem extends SubsystemBase {
                 new TrapezoidProfile.Constraints(150, 200), 0.02);
         armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
 
-        armMotorAlert = new Alert("Motor \"" + "Arm Motor" + "\" is not connected!", AlertType.kError);
+        armMotorAlert = new Alert("Motor \"" + "Arm Motor" + "\" is faulting!", AlertType.kError);
 
         armVoltagePID.setGoal(90);
         armVoltagePID.setTolerance(Constants.ArmConstants.armPositionTolerance);
@@ -68,7 +65,7 @@ public class ArmSubsystem extends SubsystemBase {
 
     public double getArmAngle() {
         double degrees = (armAbsoluteEncoder.getPosition()) * 360; // TODO: Remove the 0.67 offset after fixing
-                                                                          // the encoder zeroing
+                                                                   // the encoder zeroing
         if (degrees < 0) {
             degrees += 360;
         }
@@ -78,6 +75,8 @@ public class ArmSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        setAlerts();
+
         if (enabled) {
             updateArmLoop();
         } else {
@@ -150,13 +149,7 @@ public class ArmSubsystem extends SubsystemBase {
     }
 
     // alerts us if the arm motor is not detected
-    public Alert setArmMotorAlert() {
-        if (armMotor.getBusVoltage() > 0) {
-            armMotorAlert.set(false);
-        } else {
-            armMotorAlert.set(true);
-        }
-
-        return armMotorAlert;
+    public void setAlerts() {
+        armMotorAlert.set(armMotor.hasActiveFault());
     }
 }

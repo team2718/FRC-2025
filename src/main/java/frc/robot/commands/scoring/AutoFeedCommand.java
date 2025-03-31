@@ -9,11 +9,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants;
 import frc.robot.subsystems.SuperSystem;
 import frc.robot.subsystems.arm.ArmSubsystem;
 import frc.robot.subsystems.elevator.ElevatorSubsystem;
@@ -24,18 +21,16 @@ import frc.robot.subsystems.vision.Vision;
 public class AutoFeedCommand extends Command {
     private final SuperSystem supersystem;
     private final SwerveSubsystem swerve;
-    private final ArmSubsystem arm;
     private final EndEffectorSubsystem effector;
-    private final Vision vision;
     private final Supplier<ChassisSpeeds> velocitySupplier;
-    private final PIDController thetaPID = new PIDController(0.1, 0.0, 0.0);
+    private final PIDController thetaPID = new PIDController(0.09, 0.0, 0.0);
 
     List<AprilTag> feedTags = new ArrayList<>();
 
-    public AutoFeedCommand(SuperSystem supersystem, SwerveSubsystem swerve, ArmSubsystem arm, ElevatorSubsystem elevator, EndEffectorSubsystem effector, Vision vision, Supplier<ChassisSpeeds> velocitySupplier) {
+    public AutoFeedCommand(SuperSystem supersystem, SwerveSubsystem swerve, ArmSubsystem arm,
+            ElevatorSubsystem elevator, EndEffectorSubsystem effector,
+            Supplier<ChassisSpeeds> velocitySupplier) {
         this.supersystem = supersystem;
-        this.arm = arm;
-        this.vision = vision;
         this.swerve = swerve;
         this.effector = effector;
         this.velocitySupplier = velocitySupplier;
@@ -66,7 +61,8 @@ public class AutoFeedCommand extends Command {
         AprilTag nearestTag = null;
         double minDistance = Double.MAX_VALUE;
         for (AprilTag tag : feedTags) {
-            double distance = swerve.getPose().getTranslation().getDistance(new Translation2d(tag.pose.getX(), tag.pose.getY()));
+            double distance = swerve.getPose().getTranslation()
+                    .getDistance(new Translation2d(tag.pose.getX(), tag.pose.getY()));
             if (distance < minDistance) {
                 minDistance = distance;
                 nearestTag = tag;
@@ -75,7 +71,9 @@ public class AutoFeedCommand extends Command {
 
         ChassisSpeeds velocity = velocitySupplier.get();
 
-        double desiredRotation = nearestTag.pose.getRotation().getZ() * 180 / Math.PI - 90; // -90 because the scoring is on the robot's left side
+        double desiredRotation = nearestTag.pose.getRotation().getZ() * 180 / Math.PI - 90; // -90 because the scoring
+                                                                                            // is on the robot's left
+                                                                                            // side
         // Wrap to -180 to 180
         if (desiredRotation > 180) {
             desiredRotation -= 360;
@@ -90,7 +88,7 @@ public class AutoFeedCommand extends Command {
         // Use nearest tag to set desired heading
         // -90 because the scoring is on the robot's left side
         velocity.omegaRadiansPerSecond = MathUtil.clamp(
-            thetaPID.calculate(swerve.getPose().getRotation().getDegrees(), desiredRotation), -2.0, 2.0);
+                thetaPID.calculate(swerve.getPose().getRotation().getDegrees(), desiredRotation), -2.5, 2.5);
 
         SmartDashboard.putNumber("AutoFeed/VelocityOmega", velocity.omegaRadiansPerSecond);
 

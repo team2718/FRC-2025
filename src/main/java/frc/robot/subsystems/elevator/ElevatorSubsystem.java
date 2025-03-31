@@ -6,17 +6,8 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
-
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicExpoTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -25,7 +16,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import static edu.wpi.first.units.Units.Volts;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Voltage;
 
 // 2 motors, one is follower, PID, feedforward, hall effect sensor, use relative encoder on lead motor
@@ -57,7 +47,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         talon_config.Slot0.kD = 0.0;
         talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
         talon_config.MotionMagic.MotionMagicCruiseVelocity = 60;
-        talon_config.MotionMagic.MotionMagicAcceleration = 85;
+        talon_config.MotionMagic.MotionMagicAcceleration = 70;
 
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
@@ -116,23 +106,18 @@ public class ElevatorSubsystem extends SubsystemBase {
     // alerts us if the 1st elevator motor is not detected
     public Alert setElevatorMotor1Alert() {
         if (elevatormotor1.isConnected()) {
-            elevatorMotor1Alert.set(false); 
+            elevatorMotor1Alert.set(false);
         } else {
             elevatorMotor1Alert.set(true);
         }
-        
+
         return elevatorMotor1Alert;
     }
-    
+
     // alerts us if the 2nd elevator motor is not detected
-    public Alert setElevatorMotor2Alert() {
-        if (elevatormotor2.isConnected()) {
-            elevatorMotor2Alert.set(false); 
-        } else {
-            elevatorMotor2Alert.set(true);
-        }
-        
-        return elevatorMotor2Alert;
+    public void setAlerts() {
+        elevatorMotor1Alert.set(!elevatormotor1.isConnected());
+        elevatorMotor2Alert.set(!elevatormotor2.isConnected());
     }
 
 }

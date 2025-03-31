@@ -7,7 +7,6 @@ import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
@@ -30,7 +29,7 @@ public class AutoScoringCommand extends Command {
     private final PIDController thetaPID = new PIDController(0.09, 0.0, 0.0);
 
     private boolean complete = false;
-    private boolean autonomousFinished = false;
+    private boolean elevatorRaised = false;
 
     private double xDistance = 0.0;
     private double yDistance = 0.0;
@@ -48,9 +47,9 @@ public class AutoScoringCommand extends Command {
         this.swerve = swerve;
         this.effector = effector;
 
-        xPID.setTolerance(0.3);
-        yPID.setTolerance(0.3);
-        thetaPID.setTolerance(1.0);
+        xPID.setTolerance(0.5);
+        yPID.setTolerance(0.5);
+        thetaPID.setTolerance(2.0);
 
         timer = new Timer();
 
@@ -65,11 +64,6 @@ public class AutoScoringCommand extends Command {
         addRequirements(supersystem, swerve, arm, elevator);
     }
 
-    public AutoScoringCommand auto() {
-        autonomousFinished = true;
-        return this;
-    }
-
     @Override
     public void initialize() {
         xDistance = 0.0;
@@ -81,6 +75,7 @@ public class AutoScoringCommand extends Command {
         thetaPID.reset();
 
         complete = false;
+        elevatorRaised = false;
 
         timer.reset();
     }
@@ -96,13 +91,18 @@ public class AutoScoringCommand extends Command {
             }
         }
 
-        // Once we're close enough, go ahead and bring up the arm
-        if (minDistance < Units.feetToMeters(5)) {
+        // Once we're close enough, go ahead and bring up the elevator
+        if (elevatorRaised || minDistance < Constants.AutoAlignConstants.minDistanceToRaiseElevator) {
+            elevatorRaised = true;
             supersystem.setMoveAuto();
+        } else {
+            supersystem.setIntake();
         }
 
-        double targetXPosition = nearestTag.pose.getX() + 1.2 * Math.cos(nearestTag.pose.getRotation().getZ());
-        double targetYPosition = nearestTag.pose.getY() + 1.2 * Math.sin(nearestTag.pose.getRotation().getZ());
+        // If we can't see any tags, just drive towards the nearest tag
+        // Drive 1.3 meters away (this is the diagonal width of the robot to prevent hitting the reef)
+        double targetXPosition = nearestTag.pose.getX() + 1.3 * Math.cos(nearestTag.pose.getRotation().getZ());
+        double targetYPosition = nearestTag.pose.getY() + 1.3 * Math.sin(nearestTag.pose.getRotation().getZ());
         xDistance = swerve.getPose().getX() - targetXPosition;
         yDistance = swerve.getPose().getY() - targetYPosition;
         
@@ -134,19 +134,20 @@ public class AutoScoringCommand extends Command {
         }
 
         xDistance = vision.getVisionY();
-        yDistance = -vision.getVisionX();
+        yDistance = vision.getVisionX();
         thetaDistance = vision.getVisionTheta();
 
-        double ySetpoint = Constants.AutoAlignConstants.leftBranchToCamera;
+        double xSetpoint = Constants.AutoAlignConstants.leftBranchToCamera;
         if (!supersystem.isScoringLeft()) {
-            ySetpoint += Constants.AutoAlignConstants.distanceBetweenBranches; // Distance between branches
+            xSetpoint += Constants.AutoAlignConstants.distanceBetweenBranches; // Distance between branches
         }
 
-        double x = MathUtil.clamp(xPID.calculate(xDistance, ySetpoint), -1.0, 1.0);
-        double y = MathUtil.clamp(yPID.calculate(yDistance, -supersystem.getScoringPosition().getReefDistance()), -1.0, 1.0);
-        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 0.0), -1.0, 1.0);
+        double x = MathUtil.clamp(xPID.calculate(xDistance, xSetpoint), -1.0, 1.0);
+        double y = -MathUtil.clamp(yPID.calculate(yDistance, supersystem.getScoringPosition().getReefDistance()), -1.0, 1.0);
+        double theta = MathUtil.clamp(thetaPID.calculate(thetaDistance, 5), -1.0, 1.0);
 
         if (complete || (xPID.atSetpoint() && yPID.atSetpoint() && thetaPID.atSetpoint())) {
+            elevatorRaised = true;
             supersystem.setScoring();
 
             // The scoring is "complete" when the arm is at a scoring position
@@ -155,8 +156,11 @@ public class AutoScoringCommand extends Command {
                 timer.start();
                 effector.setScore();
             }
-        } else {
+        } else if(elevatorRaised || yDistance < Constants.AutoAlignConstants.minDistanceToRaiseElevator) {
+            elevatorRaised = true;
             supersystem.setMoveAuto();
+        } else {
+            supersystem.setIntake();
         }
 
         swerve.drive(new Translation2d(x, y), theta, false);

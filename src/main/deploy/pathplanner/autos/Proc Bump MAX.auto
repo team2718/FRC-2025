@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "ProcLine Bump"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "L4-Right"
@@ -19,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Score NonProc Path"
+            "pathName": "ProcLine to 2"
           }
         },
         {
@@ -35,7 +41,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "NonProc Get Coral"
+                  "pathName": "2 to Coral"
                 }
               },
               {
@@ -56,7 +62,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NonProc Score Nearest"
+            "pathName": "Coral to 4"
           }
         },
         {
@@ -72,7 +78,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Nearest To Feed"
+                  "pathName": "4 to Coral"
                 }
               },
               {
@@ -82,6 +88,30 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RaiseElevator"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4-Left"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Coral to 4"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AutoScore"
           }
         }
       ]

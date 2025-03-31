@@ -1,9 +1,5 @@
 package frc.robot.subsystems.climber;
 
-import java.util.Optional;
-
-import org.photonvision.EstimatedRobotPose;
-
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -13,20 +9,21 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class ClimberSubsystem extends SubsystemBase {
     private final SparkMax engageMotor;
     private final SparkMax winchMotor;
-    
+
     SparkMaxConfig engageConfig;
     SparkMaxConfig winchConfig;
 
     boolean isWinchRunning = false;
 
-    Alert climberMotorAlert;
+    Alert engageMotorAlert;
+    Alert winchMotorAlert;
 
     public ClimberSubsystem() {
         winchMotor = new SparkMax(Constants.ClimberConstants.winchmotorID, MotorType.kBrushless);
@@ -45,7 +42,20 @@ public class ClimberSubsystem extends SubsystemBase {
         winchMotor.configure(winchConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         engageMotor.configure(engageConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        climberMotorAlert = new Alert("Motor \"" + "Climber Motor" + "\" is not connected!", AlertType.kError);
+        engageMotorAlert = new Alert("Motor \"" + "Engage Motor" + "\" is faulting!", AlertType.kError);
+        winchMotorAlert = new Alert("Motor \"" + "Engage Motor" + "\" is faulting!", AlertType.kError);
+
+        engageMotor.getEncoder().setPosition(0.0);
+    }
+
+    @Override
+    public void periodic() {
+        setAlerts();
+        SmartDashboard.putNumber("Climber Engage Position", getEngagePosition());
+    }
+
+    public double getEngagePosition() {
+        return engageMotor.getEncoder().getPosition(); // Returns the position of the engage motor
     }
 
     public void setWinchMotor(double voltage) {
@@ -76,4 +86,9 @@ public class ClimberSubsystem extends SubsystemBase {
         winchMotor.setVoltage(0);
     }
 
+    // alerts us if the arm motor is not detected
+    public void setAlerts() {
+        engageMotorAlert.set(engageMotor.hasActiveFault());
+        winchMotorAlert.set(winchMotor.hasActiveFault());
+    }
 }

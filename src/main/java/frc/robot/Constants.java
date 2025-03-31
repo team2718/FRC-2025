@@ -89,9 +89,10 @@ public final class Constants {
 
 
   public static final class AutoAlignConstants {
-    public static final double leftBranchToCamera = Units.inchesToMeters(-1); // meters
-    public static final double distanceBetweenBranches = Units.inchesToMeters(14);
-    public static final double reefWallToCamera = 0.75; // meters
+    public static final double leftBranchToCamera = Units.inchesToMeters(-1.4); // From CAD
+    public static final double distanceBetweenBranches = Units.inchesToMeters(12.94); // From CAD
+    public static final double reefWallToCamera = Units.inchesToMeters(29.5); // From Testing
+    public static final double minDistanceToRaiseElevator = Units.feetToMeters(8); // From Vibes
   }
 
 

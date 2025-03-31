@@ -9,7 +9,6 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -19,7 +18,6 @@ public class IntakeSubsystem extends SubsystemBase {
     private final SparkMax flappermotor;
     SparkMaxConfig flapperConfig;
 
-    Alert intakeMotorAlert;
     Alert flapperMotorAlert;
 
     public IntakeSubsystem() {
@@ -28,12 +26,13 @@ public class IntakeSubsystem extends SubsystemBase {
         flapperConfig.inverted(false).idleMode(IdleMode.kBrake).smartCurrentLimit(2);
         flappermotor.configure(flapperConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        flapperMotorAlert = new Alert("Motor \"" + "Flapper Motor" + "\" is not connected!", AlertType.kError);
+        flapperMotorAlert = new Alert("Motor \"" + "Flapper Motor" + "\" is faulting!", AlertType.kError);
     }
 
     @Override
     public void periodic() {
         flappermotor.set(0.15);
+        setAlerts();
     }
 
     public void setFlapperBrake(boolean brake) {
@@ -46,14 +45,8 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     // alerts us if the flapper motor is not detected
-    public Alert setFlapperMotorAlert() {
-        if (flappermotor.getBusVoltage() > 0) {
-            flapperMotorAlert.set(false); 
-        } else {
-            flapperMotorAlert.set(true);
-        }
-        
-        return flapperMotorAlert;
+    public void setAlerts() {
+        flapperMotorAlert.set(flappermotor.hasActiveFault());
     }
 
 }

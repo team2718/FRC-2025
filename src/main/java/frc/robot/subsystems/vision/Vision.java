@@ -17,7 +17,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Robot;
 import java.util.ArrayList;
 import java.util.List;
@@ -264,12 +263,19 @@ public class Vision {
     /**
      * Center Camera
      */
+    // SCORING_CAM("scoring",
+    //     new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(28), Units.degreesToRadians(90)),
+    //     new Translation3d(Units.inchesToMeters(12.9),
+    //         Units.inchesToMeters(7),
+    //         Units.inchesToMeters(29.5)),
+    //     VecBuilder.fill(1, 1, 4), VecBuilder.fill(0.5, 0.5, 1));
+
     SCORING_CAM("scoring",
-        new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(28), Units.degreesToRadians(90)),
-        new Translation3d(Units.inchesToMeters(12.9),
-            Units.inchesToMeters(7),
-            Units.inchesToMeters(29.5)),
-        VecBuilder.fill(1, 1, 4), VecBuilder.fill(0.5, 0.5, 1));
+      new Rotation3d(Units.degreesToRadians(0), Units.degreesToRadians(25), Units.degreesToRadians(95)),
+      new Translation3d(Units.inchesToMeters(10.578),
+          Units.inchesToMeters(-4),   // Only tune this value
+          Units.inchesToMeters(28.8125)), // or this value
+      VecBuilder.fill(1, 1, 4), VecBuilder.fill(0.5, 0.5, 1));
 
     Alert connectedAlert;
 
@@ -468,28 +474,26 @@ public class Vision {
      * Sorts the list by timestamp.
      */
     private void updateUnreadResults() {
-      lastBestResult = Optional.empty(); // Reset the last best result
-      if (resultsList.isEmpty()) {
-        resultsList = camera.getAllUnreadResults();
+      resultsList = camera.getAllUnreadResults();
 
-        if (!resultsList.isEmpty()) {
-          PhotonPipelineResult latestResult = resultsList.get(0);
+      if (!resultsList.isEmpty()) {
+        lastBestResult = Optional.empty(); // Reset the last best result
+        PhotonPipelineResult latestResult = resultsList.get(0);
 
-          double bestAngle = 35; // Max angle to align with
-          for (PhotonTrackedTarget target : latestResult.getTargets()) {
-            double radians = target.getBestCameraToTarget().getRotation().getZ();
+        double bestAngle = 35; // Max angle to align with
+        for (PhotonTrackedTarget target : latestResult.getTargets()) {
+          double radians = target.getBestCameraToTarget().getRotation().getZ();
 
-            radians += Math.PI;
-            if (radians > Math.PI) {
-              radians -= 2 * Math.PI;
-            }
+          radians += Math.PI;
+          if (radians > Math.PI) {
+            radians -= 2 * Math.PI;
+          }
 
-            double degrees = -Math.toDegrees(radians);
+          double degrees = -Math.toDegrees(radians) - 5;
 
-            if (Math.abs(degrees) < bestAngle) {
-              bestAngle = Math.abs(degrees);
-              lastBestResult = Optional.of(target);
-            }
+          if (Math.abs(degrees) < bestAngle) {
+            bestAngle = Math.abs(degrees);
+            lastBestResult = Optional.of(target);
           }
         }
       }

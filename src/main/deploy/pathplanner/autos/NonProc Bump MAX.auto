@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "NonProcLine Bump"
+          }
+        },
+        {
           "type": "named",
           "data": {
             "name": "L4-Right"
@@ -19,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Score NonProc Path"
+            "pathName": "NonProcLine to 10"
           }
         },
         {
@@ -35,7 +41,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "NonProc Get Coral"
+                  "pathName": "10 To Coral"
                 }
               },
               {
@@ -56,7 +62,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NonProc Score Nearest"
+            "pathName": "Coral to 8"
           }
         },
         {
@@ -72,7 +78,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Nearest To Feed"
+                  "pathName": "8 to Coral"
                 }
               },
               {
@@ -99,7 +105,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NonProc Score Nearest"
+            "pathName": "Coral to 8"
           }
         },
         {
@@ -115,7 +121,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Nearest To Feed"
+                  "pathName": "8 to Coral"
                 }
               },
               {

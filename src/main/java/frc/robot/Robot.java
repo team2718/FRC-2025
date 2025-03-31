@@ -70,6 +70,12 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     m_robotContainer.resetProfilePIDs();
 
+    // Engage climber motor to get it away from the camera >:(
+    Command climber_away_command = m_robotContainer.getClimberAwayCommand();
+    if (climber_away_command != null) {
+      climber_away_command.schedule();
+    }
+
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.schedule();
@@ -88,6 +94,12 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().cancelAll();
 
     m_robotContainer.resetProfilePIDs();
+
+    // Engage climber motor to get it away from the camera >:(
+    Command climber_away_command = m_robotContainer.getClimberAwayCommand();
+    if (climber_away_command != null) {
+      climber_away_command.schedule();
+    }
   }
 
   /**

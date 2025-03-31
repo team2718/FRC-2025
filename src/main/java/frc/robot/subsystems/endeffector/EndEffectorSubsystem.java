@@ -1,6 +1,5 @@
 package frc.robot.subsystems.endeffector;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -21,8 +20,7 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 // one or two motors, 
 public class EndEffectorSubsystem extends SubsystemBase {
     private final SparkMax endeffectormotor1;
-    private final Timer timer;
-    private boolean tempHasCoral = false;
+
     private boolean hasCoral = false;
     private boolean enabled = true;
 
@@ -38,17 +36,10 @@ public class EndEffectorSubsystem extends SubsystemBase {
 
     private State currentState = State.HOLD;
 
-    private final double senseCurrent = 19.0; // Current reached when a coral has been intook
-    private final double senseDelay = 0.2; // Seconds after starting intaking to start sensing (to avoid motor start
-                                           // spike)
-    private final double extraIntakeTimer = 0.2; // Seconds to continue intaking after detecting coral
-
-    private double senseTime = 0.0;
-
     Alert endEffectorAlert;
+    Alert laserAlert;
 
     public EndEffectorSubsystem() {
-        timer = new Timer();
         endeffectormotor1 = new SparkMax(Constants.EndEffectorConstants.endeffectormotor1ID, MotorType.kBrushless);
         SparkMaxConfig endeffectorConfig = new SparkMaxConfig();
         endeffectorConfig.idleMode(IdleMode.kBrake);
@@ -56,7 +47,8 @@ public class EndEffectorSubsystem extends SubsystemBase {
         endeffectorConfig.smartCurrentLimit(25);
         endeffectormotor1.configure(endeffectorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-        endEffectorAlert = new Alert("Motor \"" + "End Effector" + "\" is not connected!", AlertType.kError);
+        endEffectorAlert = new Alert("Motor \"" + "End Effector" + "\" is faulting!", AlertType.kError);
+        laserAlert = new Alert("Effector Laser not detected!", AlertType.kError);
 
         try {
             lc.setRangingMode(LaserCan.RangingMode.SHORT);
@@ -74,16 +66,24 @@ public class EndEffectorSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
 
-        if (!enabled) {
-            endeffectormotor1.set(0);
-            return;
-        }
+        setAlerts();
 
         Measurement laser_measurement = lc.getMeasurement();
         if (laser_measurement != null) {
             hasCoral = laser_measurement.distance_mm < 10;
+            laserAlert.set(false);
         } else {
             hasCoral = false;
+            laserAlert.set(true);
+        }
+
+        SmartDashboard.putString("Effector State", currentState.name());
+        SmartDashboard.putBoolean("Has Coral", hasCoral);
+        SmartDashboard.putNumber("Effector Current", endeffectormotor1.getOutputCurrent());
+
+        if (!enabled) {
+            endeffectormotor1.set(0);
+            return;
         }
 
         if (currentState == State.INTAKE && hasCoral) {
@@ -104,10 +104,7 @@ public class EndEffectorSubsystem extends SubsystemBase {
                 endeffectormotor1.set(0.7);
                 break;
         }
-
-        SmartDashboard.putString("Effector State", currentState.name());
-        SmartDashboard.putBoolean("Has Coral", hasCoral);
-        SmartDashboard.putNumber("Effector Current", endeffectormotor1.getOutputCurrent());
+        ;
     }
 
     public boolean hasCoral() {
@@ -116,8 +113,6 @@ public class EndEffectorSubsystem extends SubsystemBase {
 
     public void setHold() {
         currentState = State.HOLD;
-        timer.stop();
-        timer.reset();
     }
 
     public void setIntake() {
@@ -127,23 +122,14 @@ public class EndEffectorSubsystem extends SubsystemBase {
         }
 
         currentState = State.INTAKE;
-        timer.start();
     }
 
     public void setOuttake() {
         currentState = State.OUTTAKE;
-        timer.stop();
-        timer.reset();
-        hasCoral = false; // Assume any coral is leaving
-        tempHasCoral = false; // Reset tempHasCoral to avoid false positives
     }
 
     public void setScore() {
         currentState = State.SCORE;
-        timer.stop();
-        timer.reset();
-        hasCoral = false; // Assume any coral is leaving
-        tempHasCoral = false; // Reset tempHasCoral to avoid false positives
     }
 
     public void setDealgify() {
@@ -151,14 +137,8 @@ public class EndEffectorSubsystem extends SubsystemBase {
     }
 
     // alerts us if the end effector motor is not detected
-    public Alert setEndEffectorAlert() {
-        if (endeffectormotor1.getBusVoltage() > 0) {
-            endEffectorAlert.set(false);
-        } else {
-            endEffectorAlert.set(true);
-        }
-
-        return endEffectorAlert;
+    public void setAlerts() {
+        endEffectorAlert.set(endeffectormotor1.hasActiveFault());
     }
 
 }

@@ -132,7 +132,11 @@ public class SuperSystem extends SubsystemBase {
 
             // If the arm is upright, then we can move the elevator
             else if (arm.safeToRaiseElevator()) {
-                elevator.setTargetPosition(scoringPosition.getElevatorPosition());
+                double targetElevatorPosition = scoringPosition.getElevatorPosition();
+                if (state == SuperStates.ELEVATOR_ONLY) {
+                    targetElevatorPosition = Math.min(targetElevatorPosition, 16); // Don't go all the way up in ELEVATOR_ONLY so we don't tip
+                }
+                elevator.setTargetPosition(targetElevatorPosition);
             }
 
             // Finally, if the elevator is at the right spot, we can score
