@@ -47,8 +47,8 @@ public class AutoScoringCommand extends Command {
         this.swerve = swerve;
         this.effector = effector;
 
-        xPID.setTolerance(0.5);
-        yPID.setTolerance(0.5);
+        xPID.setTolerance(0.4);
+        yPID.setTolerance(0.4);
         thetaPID.setTolerance(2.0);
 
         timer = new Timer();
