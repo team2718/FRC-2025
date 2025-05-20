@@ -70,7 +70,8 @@ public class EndEffectorSubsystem extends SubsystemBase {
 
         Measurement laser_measurement = lc.getMeasurement();
         if (laser_measurement != null) {
-            hasCoral = laser_measurement.distance_mm < 10;
+            SmartDashboard.putNumber("Laser Distance", laser_measurement.distance_mm);
+            hasCoral = laser_measurement.distance_mm < 20;
             laserAlert.set(false);
         } else {
             hasCoral = false;
@@ -94,8 +95,11 @@ public class EndEffectorSubsystem extends SubsystemBase {
             case HOLD:
                 endeffectormotor1.set(0);
                 break;
-            case INTAKE, SCORE:
+            case INTAKE:
                 endeffectormotor1.set(0.4);
+                break;
+            case SCORE:
+                endeffectormotor1.set(0.6);
                 break;
             case OUTTAKE:
                 endeffectormotor1.set(-0.5);
