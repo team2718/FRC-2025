@@ -44,7 +44,7 @@ public class ArmSubsystem extends SubsystemBase {
         armConfig.inverted(true);
 
         armConfig.absoluteEncoder.zeroCentered(true);
-        armConfig.absoluteEncoder.zeroOffset(0.925);
+        armConfig.absoluteEncoder.zeroOffset(0.092);
 
         armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
