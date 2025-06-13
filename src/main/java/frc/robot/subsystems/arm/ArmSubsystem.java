@@ -44,7 +44,7 @@ public class ArmSubsystem extends SubsystemBase {
         armConfig.inverted(true);
 
         armConfig.absoluteEncoder.zeroCentered(true);
-        armConfig.absoluteEncoder.zeroOffset(0.092);
+        armConfig.absoluteEncoder.zeroOffset(0.098);
 
         armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -53,9 +53,9 @@ public class ArmSubsystem extends SubsystemBase {
         // true max velocity is 150 deg/s
         // true max acceleration is 2000 deg/s^2
         // TODO: Kp to be tuned
-        armFeedforward = new ArmFeedforward(0.14, 0.41, 0.08);
-        armVoltagePID = new ProfiledPIDController(0.15, 0, 0,
-                new TrapezoidProfile.Constraints(100, 200), 0.02);
+        armFeedforward = new ArmFeedforward(0.42, 0.1, 0.070);
+        armVoltagePID = new ProfiledPIDController(0.12, 0, 0,
+                new TrapezoidProfile.Constraints(120, 200), 0.02);
         armAbsoluteEncoder = armMotor.getAbsoluteEncoder();
 
         armMotorAlert = new Alert("Motor \"" + "Arm Motor" + "\" is faulting!", AlertType.kError);

@@ -35,19 +35,20 @@ public class ElevatorSubsystem extends SubsystemBase {
     Alert elevatorMotor2Alert;
 
     public ElevatorSubsystem() {
-        talon_config.CurrentLimits.StatorCurrentLimit = 30;
+        talon_config.CurrentLimits.SupplyCurrentLimit = 20;
+        talon_config.CurrentLimits.StatorCurrentLimit = 40;
         talon_config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         talon_config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-        talon_config.Slot0.kG = 0.35;
-        talon_config.Slot0.kS = 0.17;
+        talon_config.Slot0.kG = 0.33;
+        talon_config.Slot0.kS = 0.16;
         talon_config.Slot0.kV = 0.131;
         talon_config.Slot0.kA = 0.0;
-        talon_config.Slot0.kP = 0.0; //1.8
+        talon_config.Slot0.kP = 3.5;
         talon_config.Slot0.kI = 0.0;
-        talon_config.Slot0.kD = 0.0;
+        talon_config.Slot0.kD = 0.2;
         talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
         talon_config.MotionMagic.MotionMagicCruiseVelocity = 70;
-        talon_config.MotionMagic.MotionMagicAcceleration = 100;
+        talon_config.MotionMagic.MotionMagicAcceleration = 120;
 
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);

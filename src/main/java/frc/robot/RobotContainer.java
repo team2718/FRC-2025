@@ -189,8 +189,8 @@ public class RobotContainer {
     driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
 
     // Driver intake control
-    // driverXbox.leftTrigger().whileTrue(
-    //     new AutoFeedCommand(supersystem, drivebase, arm, elevator, endeffector, driveAngularVelocity));
+    driverXbox.leftTrigger().whileTrue(
+        new AutoFeedCommand(supersystem, drivebase, arm, elevator, endeffector, driveAngularVelocity));
 
     driverXbox.leftBumper().whileTrue(Commands.runEnd(() -> {
       endeffector.setOuttake();
@@ -211,7 +211,7 @@ public class RobotContainer {
     }, endeffector));
 
     // Driver scoring control
-    // driverXbox.rightTrigger().whileTrue(autoScore);
+    driverXbox.rightTrigger().whileTrue(autoScore);
     driverXbox.rightBumper().whileTrue(score);
 
     // Driver climber control
