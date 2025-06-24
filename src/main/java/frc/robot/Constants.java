@@ -49,8 +49,8 @@ public final class Constants {
 
   public static class OperatorConstants {
 
-    public static final double SPEED_MULTIPLIER = 0.3;
-    public static final double ROTATION_MULTIPLIER = 0.3;
+    public static final double SPEED_MULTIPLIER = 0.7;
+    public static final double ROTATION_MULTIPLIER = 0.7;
     public static final double DEADBAND = 0.3;
   }
 
@@ -89,7 +89,7 @@ public final class Constants {
 
  
   public static final class AutoAlignConstants {
-    public static final double leftBranchToCamera = Units.inchesToMeters(-4.0); // From CAD, if arm bends more change this (-2)
+    public static final double leftBranchToCamera = Units.inchesToMeters(-0.0); // From CAD, if arm bends more change this (-2)
     public static final double distanceBetweenBranches = Units.inchesToMeters(12.94); // From CAD
     public static final double reefWallToCamera = Units.inchesToMeters(29.5); // From Testing
     public static final double minDistanceToRaiseElevator = Units.feetToMeters(8); // From Vibes

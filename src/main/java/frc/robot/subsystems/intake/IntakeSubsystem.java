@@ -31,7 +31,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // flappermotor.set(0.15);
+        flappermotor.set(0.15);
         setAlerts();
     }
 

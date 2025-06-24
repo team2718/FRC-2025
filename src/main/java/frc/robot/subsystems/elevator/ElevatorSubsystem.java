@@ -48,7 +48,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         talon_config.Slot0.kD = 0.2;
         talon_config.Slot0.GravityType = GravityTypeValue.Elevator_Static;
         talon_config.MotionMagic.MotionMagicCruiseVelocity = 70;
-        talon_config.MotionMagic.MotionMagicAcceleration = 120;
+        talon_config.MotionMagic.MotionMagicAcceleration = 110;
 
         elevatormotor1.getConfigurator().apply(talon_config);
         elevatormotor2.getConfigurator().apply(talon_config);
@@ -119,6 +119,10 @@ public class ElevatorSubsystem extends SubsystemBase {
     public void setAlerts() {
         elevatorMotor1Alert.set(!elevatormotor1.isConnected());
         elevatorMotor2Alert.set(!elevatormotor2.isConnected());
+    }
+
+    public void resetEncoder() {
+        elevatormotor1.setPosition(0.0);
     }
 
 }

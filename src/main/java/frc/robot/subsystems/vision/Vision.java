@@ -484,6 +484,11 @@ public class Vision {
         for (PhotonTrackedTarget target : latestResult.getTargets()) {
           double radians = target.getBestCameraToTarget().getRotation().getZ();
 
+          // Limit pose ambiguity
+          if (target.getPoseAmbiguity() > 0.07) {
+            continue;
+          }
+
           radians += Math.PI;
           if (radians > Math.PI) {
             radians -= 2 * Math.PI;
@@ -518,6 +523,10 @@ public class Vision {
     private void updateEstimatedGlobalPose() {
       Optional<EstimatedRobotPose> visionEst = Optional.empty();
       for (var change : resultsList) {
+        PhotonTrackedTarget bestTarget = change.getBestTarget();
+        if (bestTarget != null && bestTarget.poseAmbiguity > 0.07) {
+          continue;
+        }
         visionEst = poseEstimator.update(change);
         updateEstimationStdDevs(visionEst, change.getTargets());
       }

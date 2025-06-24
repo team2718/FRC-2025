@@ -235,6 +235,8 @@ public class RobotContainer {
       climber.setWinchMotor(0.0);
     }, climber, arm, elevator, supersystem));
 
+    driverXbox.rightStick().onTrue(Commands.runOnce(() -> elevator.resetEncoder()));
+
     // Operator scoring position control
     secondXbox.leftBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringLeft())).debounce(0.4);
     secondXbox.rightBumper().onTrue(Commands.runOnce(() -> supersystem.setScoringRight())).debounce(0.4);
