@@ -19,7 +19,7 @@ public class SuperSystem extends SubsystemBase {
         
         L1(2.0, 60, 0.75),
         L2(3.0, 60, 0.75),
-        L3(11.5, 55, 0.75),
+        L3(12.0, 55, 0.75),
         L4(27.0, 50, 0.85);
 
         

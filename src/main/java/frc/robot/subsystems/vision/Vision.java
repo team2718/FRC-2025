@@ -485,7 +485,7 @@ public class Vision {
           double radians = target.getBestCameraToTarget().getRotation().getZ();
 
           // Limit pose ambiguity
-          if (target.getPoseAmbiguity() > 0.07) {
+          if (target.getPoseAmbiguity() > 0.10) {
             continue;
           }
 
@@ -524,7 +524,7 @@ public class Vision {
       Optional<EstimatedRobotPose> visionEst = Optional.empty();
       for (var change : resultsList) {
         PhotonTrackedTarget bestTarget = change.getBestTarget();
-        if (bestTarget != null && bestTarget.poseAmbiguity > 0.07) {
+        if (bestTarget != null && bestTarget.poseAmbiguity > 0.10) {
           continue;
         }
         visionEst = poseEstimator.update(change);

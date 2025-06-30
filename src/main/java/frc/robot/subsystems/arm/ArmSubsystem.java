@@ -28,7 +28,7 @@ public class ArmSubsystem extends SubsystemBase {
 
     Alert armMotorAlert;
 
-    public final double intakePosition = 91.0; // intaking angle
+    public final double intakePosition = 92.0; // intaking angle
     public final double position90 = 85.0; // upright angle
     public final double safeRaisingPosition = 75.0; // safe raising angle
 
@@ -44,7 +44,7 @@ public class ArmSubsystem extends SubsystemBase {
         armConfig.inverted(true);
 
         armConfig.absoluteEncoder.zeroCentered(true);
-        armConfig.absoluteEncoder.zeroOffset(0.099);
+        armConfig.absoluteEncoder.zeroOffset(0.104);
 
         armMotor.configure(armConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
